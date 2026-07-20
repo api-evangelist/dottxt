@@ -1,0 +1,25 @@
+generated: '2026-07-18'
+method: searched
+source: openapi/dottxt-platform-openapi.yml
+docs: https://docs.dottxt.ai/api/authentication
+summary:
+  types:
+  - http
+  api_key_in:
+  - header
+schemes:
+- name: bearerAuth
+  type: http
+  scheme: bearer
+  description: >-
+    API key passed as a bearer token in the Authorization header:
+    `Authorization: Bearer $DOTTXT_API_KEY`. Keys use the prefix `sk-dottxt-`.
+    There is no OAuth flow; a single API key authenticates all requests.
+  key_prefix: sk-dottxt-
+  header: Authorization
+  sources:
+  - openapi/dottxt-platform-openapi.yml
+notes: >-
+  API access is currently gated by a waitlist form
+  (https://h1xbpbfsf0w.typeform.com/to/fwQNWmS8); keys are issued out of band,
+  not via a self-serve dashboard.
