@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info:
+  title: dottxt Platform Chat Models API
+  version: v1
+  description: OpenAI-compatible structured-output API from dottxt (.txt), the makers of Outlines. The API guarantees 100% schema-compliant model output by construction using constrained decoding. It follows the OpenAI Chat Completions request/response shape, so existing OpenAI SDKs work by changing the base URL and API key. Structured output is requested with the `response_format` parameter (JSON Schema), and results can be streamed as token deltas (SSE) or field-by-field as RFC 6902 JSON Patch events. This specification is a faithful transcription of the public API reference at https://docs.dottxt.ai/api/overview ; it is not published by dottxt.
+  contact:
+    name: dottxt
+    url: https://dottxt.ai/
+    email: contact@dottxt.co
+  x-provenance:
+    generated: '2026-07-18'
+    method: generated
+    source: https://docs.dottxt.ai/api/overview.md
+servers:
+- url: https://api.dottxt.ai/v1
+  description: dottxt production API
+security:
+- bearerAuth: []
+tags:
+- name: Models
+  description: Models available to your API key.
+paths:
+  /models:
+    get:
+      operationId: listModels
+      tags:
+      - Models
+      summary: List Models
+      description: Return the list of models available to your API key.
+      responses:
+        '200':
+          description: The list of available models.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelList'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIErrorResponse'
+components:
+  schemas:
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+          example: openai/gpt-oss-20b
+        object:
+          type: string
+          example: model
+        owned_by:
+          type: string
+    ModelList:
+      type: object
+      properties:
+        object:
+          type: string
+          example: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+    OpenAIErrorResponse:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            type:
+              type: string
+            param:
+              type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'API key passed as a bearer token: `Authorization: Bearer $DOTTXT_API_KEY`. Keys use the prefix `sk-dottxt-`.'
