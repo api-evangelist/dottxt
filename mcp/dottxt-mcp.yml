@@ -1,0 +1,21 @@
+generated: '2026-07-18'
+method: derived
+status: candidate
+source: openapi/dottxt-platform-openapi.yml
+note: >-
+  No official hosted/remote MCP server was found for dottxt (searched docs, the
+  dottxt-ai GitHub org, and MCP registries as of 2026-07-18). The tools below
+  are a candidate surface derived one-per-operation from the OpenAPI, offered as
+  a starting point for an MCP wrapper of the OpenAI-compatible API.
+server:
+  name: dottxt
+  transport: http
+tools:
+- name: create_chat_completion
+  description: >-
+    Generate a schema-compliant model response from a message array, with
+    structured output via response_format, streaming, and tool calling.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- name: list_models
+  description: Return the list of models available to your API key.
+  source_operation: openapi/dottxt-platform-openapi.yml#listModels

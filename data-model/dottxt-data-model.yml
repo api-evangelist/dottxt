@@ -1,0 +1,54 @@
+generated: '2026-07-18'
+method: derived
+source: openapi/dottxt-platform-openapi.yml
+entities:
+- name: ChatCompletion
+  description: The result of a create-chat-completion call.
+  fields: [id, object, created, model, choices, usage]
+- name: ChatCompletionChoice
+  description: One generated choice within a completion.
+  fields: [index, finish_reason, message]
+- name: ChatMessage
+  description: A single role/content message in the conversation.
+  fields: [role, content]
+- name: ResponseFormat
+  description: Structured-output constraint (json_schema / json_object / text).
+  fields: [type, json_schema]
+- name: Usage
+  description: Token accounting for a completion.
+  fields: [prompt_tokens, completion_tokens, total_tokens]
+- name: Model
+  description: A model available to the API key.
+  fields: [id, object, owned_by]
+- name: ModelList
+  description: Envelope returned by List Models.
+  fields: [object, data]
+relationships:
+- from: ChatCompletion
+  to: ChatCompletionChoice
+  type: has_many
+  via: choices
+- from: ChatCompletionChoice
+  to: ChatMessage
+  type: has_one
+  via: message
+- from: ChatCompletion
+  to: Usage
+  type: has_one
+  via: usage
+- from: ChatCompletion
+  to: Model
+  type: belongs_to
+  via: model
+- from: ModelList
+  to: Model
+  type: has_many
+  via: data
+- from: CreateChatCompletionRequest
+  to: ChatMessage
+  type: has_many
+  via: messages
+- from: CreateChatCompletionRequest
+  to: ResponseFormat
+  type: has_one
+  via: response_format

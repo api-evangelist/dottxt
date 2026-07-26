@@ -1,0 +1,49 @@
+generated: '2026-07-18'
+method: searched
+source: https://github.com/dottxt-ai
+packages:
+- language: python
+  registry: pypi
+  name: dottxt
+  url: https://pypi.org/project/dottxt/
+  install: pip install dottxt
+  repo: https://github.com/dottxt-ai/dottxt-python
+  description: >-
+    The official Python library for the .txt (dottxt) platform API. Sync and
+    async client surfaces over the REST API; Python 3.10+.
+  official: true
+- language: python
+  registry: pypi
+  name: outlines
+  url: https://pypi.org/project/outlines/
+  install: pip install outlines
+  repo: https://github.com/dottxt-ai/outlines
+  description: >-
+    Outlines — dottxt's open-source structured-generation library for LLMs
+    (65M+ downloads). Guarantees JSON Schema / regex / grammar-shaped output
+    during local generation.
+  official: true
+- language: rust
+  registry: crates.io
+  name: outlines-core
+  url: https://crates.io/crates/outlines-core
+  install: cargo add outlines-core
+  repo: https://github.com/dottxt-ai/outlines-core
+  description: Faster structured-generation core for Outlines, written in Rust.
+  official: true
+- language: python
+  registry: pypi
+  name: outlines-core
+  url: https://pypi.org/project/outlines-core/
+  install: pip install outlines-core
+  repo: https://github.com/dottxt-ai/outlines-core
+  description: Python bindings for the Rust outlines-core structured-generation engine.
+  official: true
+- language: python
+  registry: pypi
+  name: prompts
+  url: https://pypi.org/project/prompts/
+  install: pip install prompts
+  repo: https://github.com/dottxt-ai/prompts
+  description: dottxt's prompt-templating library for LLM applications.
+  official: true

@@ -1,0 +1,69 @@
+generated: '2026-07-18'
+method: searched
+source: https://docs.dottxt.ai/api/overview
+docs:
+  overview: https://docs.dottxt.ai/api/overview
+  authentication: https://docs.dottxt.ai/api/authentication
+  chat_completions: https://docs.dottxt.ai/api/chat-completions
+  streaming: https://docs.dottxt.ai/json-schema/streaming
+  migrate: https://docs.dottxt.ai/migrate-from-other-providers
+summary: >-
+  dottxt exposes an OpenAI-compatible Chat Completions API. The single most
+  important convention is structured output: pass a JSON Schema via
+  `response_format` and the output is guaranteed to satisfy it by construction
+  (constrained decoding) — no retries, no validation loops.
+compatibility:
+  standard: openai-chat-completions
+  note: >-
+    Drop-in for OpenAI SDKs by changing the base URL to
+    https://api.dottxt.ai/v1 and the API key.
+authentication:
+  style: bearer-api-key
+  header: 'Authorization: Bearer $DOTTXT_API_KEY'
+  key_prefix: sk-dottxt-
+structured_output:
+  parameter: response_format
+  modes:
+  - type: json_schema
+    description: Output guaranteed to match the supplied JSON Schema.
+  - type: json_object
+  - type: text
+streaming:
+  supported: true
+  modes:
+  - value: false
+    description: Single JSON response (default).
+  - value: true
+    description: Token deltas via Server-Sent Events (SSE).
+  - value: patch
+    description: >-
+      Field-by-field structured streaming as RFC 6902 JSON Patch operations.
+      NDJSON by default; set `Accept: text/event-stream` for SSE.
+  standards:
+  - Server-Sent Events
+  - RFC 6902 (JSON Patch)
+idempotency:
+  supported: false
+  note: >-
+    No idempotency-key header is documented. Chat completion requests are not
+    idempotent; use the `seed` parameter for deterministic sampling.
+pagination:
+  supported: false
+  note: List Models returns the full set in a single `{object:list, data:[]}` envelope.
+versioning:
+  scheme: uri-path
+  current: v1
+  base_url: https://api.dottxt.ai/v1
+error_envelope:
+  shape: openai-error
+  example: '{"error": {"code": "", "message": "", "type": "", "param": ""}}'
+  cross_reference: errors/dottxt-problem-types.yml
+rate_limiting:
+  documented: false
+  note: >-
+    A 429 status ("Rate limit exceeded") is documented as a possible response,
+    but no rate-limit headers or published quotas were found in the docs.
+cross_links:
+  authentication: authentication/dottxt-authentication.yml
+  errors: errors/dottxt-problem-types.yml
+  lifecycle: lifecycle/dottxt-lifecycle.yml

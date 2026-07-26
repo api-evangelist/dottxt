@@ -1,0 +1,30 @@
+generated: '2026-07-18'
+method: searched
+host: https://api.dottxt.ai
+note: >-
+  No real /.well-known/ documents are published. On api.dottxt.ai the
+  /.well-known/* paths return HTTP 200 but serve the site's Next.js SPA HTML
+  shell (content-type text/html), not JSON discovery documents. On the apex
+  dottxt.ai, /.well-known/security.txt returns 404. Recorded for auditability;
+  no WellKnown/SecurityTxt pointer emitted.
+documents:
+- path: /.well-known/openid-configuration
+  status: 200
+  real: false
+  note: SPA HTML catch-all, not OIDC metadata
+- path: /.well-known/oauth-authorization-server
+  status: 200
+  real: false
+  note: SPA HTML catch-all, not RFC 8414 metadata
+- path: /.well-known/api-catalog
+  status: 200
+  real: false
+  note: SPA HTML catch-all
+- path: /.well-known/ai-plugin.json
+  status: 200
+  real: false
+  note: SPA HTML catch-all
+- path: /.well-known/security.txt
+  status: 404
+  real: false
+  host: https://dottxt.ai

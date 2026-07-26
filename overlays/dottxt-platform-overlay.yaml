@@ -1,0 +1,27 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for dottxt Platform API
+  version: 1.0.0
+extends: openapi/dottxt-platform-openapi.yml
+actions:
+- target: $.info
+  update:
+    x-apievangelist-enrichment: '2026-07-18'
+    x-apievangelist-provider: dottxt
+    x-apievangelist-openai-compatible: true
+- target: $.info
+  update:
+    x-apievangelist-artifacts:
+      authentication: authentication/dottxt-authentication.yml
+      conventions: conventions/dottxt-conventions.yml
+      errors: errors/dottxt-problem-types.yml
+      lifecycle: lifecycle/dottxt-lifecycle.yml
+      packages: packages/dottxt-packages.yml
+      llms: llms/dottxt-llms.txt
+- target: $.paths./chat/completions.post
+  update:
+    x-apievangelist-marquee: true
+    x-apievangelist-structured-output: response_format.json_schema
+- target: $.components.securitySchemes.bearerAuth
+  update:
+    x-apievangelist-key-prefix: sk-dottxt-

@@ -1,0 +1,16 @@
+{
+  "provider": "dottxt",
+  "sources": [
+    "dottxt-chat-api-openapi.yml",
+    "dottxt-models-api-openapi.yml"
+  ],
+  "outputs": [
+    "dottxt-chat-api-openapi.yml",
+    "dottxt-models-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}

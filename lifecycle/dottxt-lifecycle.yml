@@ -1,0 +1,23 @@
+generated: '2026-07-18'
+method: searched
+source: https://docs.dottxt.ai/api/overview
+versioning:
+  scheme: uri-path
+  current: v1
+  base_url: https://api.dottxt.ai/v1
+  docs: https://docs.dottxt.ai/api/overview
+deprecation:
+  policy_url: null
+  sunset_header: false
+  note: No published deprecation/Sunset-header policy was found as of 2026-07-18.
+sla:
+  url: null
+  note: No published SLA/uptime commitment was found.
+status_page: null
+status_page_note: >-
+  No public status page (status.dottxt.ai does not resolve) was found as of
+  2026-07-18.
+deprecated_operations: []
+notes: >-
+  The platform is in early/waitlisted availability; the model catalog
+  (see openapi/) evolves as new open-source models are added.

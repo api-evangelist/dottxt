@@ -1,0 +1,39 @@
+generated: '2026-07-18'
+method: searched
+source: https://docs.dottxt.ai/api/chat-completions
+format: openai-error
+envelope:
+  field: error
+  shape: '{"error": {"code": "string", "message": "string", "type": "string", "param": "string"}}'
+  note: >-
+    dottxt uses the OpenAI error envelope (`OpenAIErrorResponse`), not RFC 9457
+    problem+json.
+problems:
+- status: 400
+  title: Invalid request format
+  meaning: The request body was malformed or failed validation.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 401
+  title: Missing or invalid API key
+  meaning: The Authorization bearer token is absent or not valid.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 402
+  title: Insufficient credits
+  meaning: The account has no remaining credit/balance to serve the request.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 403
+  title: No access to model
+  meaning: The API key is not authorized for the requested model.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 404
+  title: Model not found
+  meaning: The requested model ID does not exist.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 429
+  title: Rate limit exceeded
+  meaning: Too many requests; slow down and retry.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion
+- status: 500
+  title: Server error
+  meaning: Unexpected error on the dottxt platform.
+  source_operation: openapi/dottxt-platform-openapi.yml#createChatCompletion

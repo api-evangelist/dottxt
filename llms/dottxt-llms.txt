@@ -1,0 +1,70 @@
+# dottxt docs
+
+## Docs
+
+- [Authentication](https://docs.dottxt.ai/api/authentication.md)
+- [Create Chat Completion](https://docs.dottxt.ai/api/chat-completions.md): Generate a model response from a message array, with support for token streaming, JSON Patch streaming, and tool calling.
+- [List Models](https://docs.dottxt.ai/api/list-models.md): Return the list of models available to your API key.
+- [Models Catalog](https://docs.dottxt.ai/api/models.md): Models available on the dottxt platform.
+- [API Overview](https://docs.dottxt.ai/api/overview.md): OpenAI-compatible API basics: base URL, headers, auth, models, and endpoint map.
+- [Schema Review](https://docs.dottxt.ai/audit.md)
+- [Start Here](https://docs.dottxt.ai/index.md): Pick the fastest path based on what you need right now.
+- [Instructor](https://docs.dottxt.ai/integrations/instructor.md)
+- [LangGraph](https://docs.dottxt.ai/integrations/langgraph.md)
+- [Integrations Overview](https://docs.dottxt.ai/integrations/overview.md): Choose a migration path, then use framework integration guides.
+- [Pydantic AI](https://docs.dottxt.ai/integrations/pydantic-ai.md)
+- [Vercel AI SDK](https://docs.dottxt.ai/integrations/vercel-ai-sdk.md)
+- [Additional Properties](https://docs.dottxt.ai/json-schema/additional-properties.md): Control schema strictness by deciding where unknown keys are allowed.
+- [Agent Output](https://docs.dottxt.ai/json-schema/agent-output.md): Design strict agent envelopes so orchestration code can execute tool calls without heuristics.
+- [Schema composition with anyOf](https://docs.dottxt.ai/json-schema/anyof-object-variants.md): Use discriminated branches to validate one of several alternative shapes.
+- [API Calls](https://docs.dottxt.ai/json-schema/api-calls.md): Generate execution-ready API call plans from natural language requests.
+- [Pydantic](https://docs.dottxt.ai/json-schema/authoring/pydantic.md): Author JSON Schema with Pydantic models and use it with dottxt structured generation.
+- [TypeBox](https://docs.dottxt.ai/json-schema/authoring/typebox.md)
+- [Zod](https://docs.dottxt.ai/json-schema/authoring/zod.md)
+- [Bounded Arrays](https://docs.dottxt.ai/json-schema/bounded-arrays.md): Use array limits to control output size, cost, and downstream complexity.
+- [Chain of Thought](https://docs.dottxt.ai/json-schema/chain-of-thought.md): Capture useful reasoning artifacts in a controlled, product-safe schema.
+- [Classification](https://docs.dottxt.ai/json-schema/classification.md): Build deterministic classifiers with enums and bounded explanation fields.
+- [Conditional Requirements](https://docs.dottxt.ai/json-schema/conditional-requirements.md): Require different fields based on the value of another field.
+- [Content Generation](https://docs.dottxt.ai/json-schema/content-generation.md): Generate marketing or product copy in a strict, publishable structure.
+- [Data Extraction](https://docs.dottxt.ai/json-schema/data-extraction.md): Extract high-value fields from unstructured text into strict JSON ready for storage.
+- [dottxt SDK](https://docs.dottxt.ai/json-schema/dottxt-sdk.md): Pass Python types directly to the dottxt SDK without authoring JSON Schema by hand.
+- [Enum With Fallback](https://docs.dottxt.ai/json-schema/enum-with-fallback.md): Use controlled categories with an explicit `other` escape hatch.
+- [Field Dependencies](https://docs.dottxt.ai/json-schema/field-dependencies.md): Require fields only when logically related fields are present.
+- [Form Processing](https://docs.dottxt.ai/json-schema/form-processing.md): Normalize unstructured form text into a strict backend payload with validation-friendly fields.
+- [Genson](https://docs.dottxt.ai/json-schema/genson.md): Infer JSON Schema from JSON instances using Genson in Python.
+- [Improve Your Schema](https://docs.dottxt.ai/json-schema/improve-your-schema.md): Turn prior knowledge into explicit constraints for more reliable structured outputs.
+- [Optional Fields](https://docs.dottxt.ai/json-schema/optional-fields.md): Use optional fields intentionally so required data stays strict while extras remain flexible.
+- [Optional vs Null](https://docs.dottxt.ai/json-schema/optional-vs-null.md): Model omission and explicit null as different, intentional states.
+- [Overview](https://docs.dottxt.ai/json-schema/overview.md): Treat JSON Schema as a generation program, not a formatting hint.
+- [Quicktype](https://docs.dottxt.ai/json-schema/quicktype.md): Infer JSON Schema from sample JSON using Quicktype.
+- [Recursion](https://docs.dottxt.ai/json-schema/recursion.md): Model tree-like outputs where nodes contain children of the same shape.
+- [Array](https://docs.dottxt.ai/json-schema/reference/array.md): Ordered lists with item schemas and length constraints.
+- [Boolean](https://docs.dottxt.ai/json-schema/reference/boolean.md): True/false fields for flags and toggles.
+- [Composition](https://docs.dottxt.ai/json-schema/reference/composition.md): Reuse and combine schemas.
+- [Conditionals](https://docs.dottxt.ai/json-schema/reference/conditionals.md): Conditional validation based on field values and presence.
+- [Const](https://docs.dottxt.ai/json-schema/reference/const.md): Constrain a field to a single fixed value.
+- [Enum](https://docs.dottxt.ai/json-schema/reference/enum.md): Restrict a value to a fixed set of choices.
+- [Integer](https://docs.dottxt.ai/json-schema/reference/integer.md): Whole-number fields and integer constraints.
+- [Null](https://docs.dottxt.ai/json-schema/reference/null.md): Require a field to be present and explicitly null.
+- [Number](https://docs.dottxt.ai/json-schema/reference/number.md): Numeric values with decimal support and numeric constraints.
+- [Object](https://docs.dottxt.ai/json-schema/reference/object.md): Object schemas with constraints.
+- [String](https://docs.dottxt.ai/json-schema/reference/string.md): String fields with length, pattern, and format constraints.
+- [Reusability](https://docs.dottxt.ai/json-schema/reusability.md): Use `$defs` and `$ref` to keep repeated structures consistent across your schema.
+- [JSON Patch Streaming](https://docs.dottxt.ai/json-schema/streaming.md): Stream structured output field-by-field as JSON Patch events as the model generates them.
+- [String Bounds](https://docs.dottxt.ai/json-schema/string-bounds.md): Constrain text length and shape so outputs fit downstream systems.
+- [Success and Error Output](https://docs.dottxt.ai/json-schema/success-error-output.md): Use a single response envelope that stays parseable in both success and failure paths.
+- [UI Generation](https://docs.dottxt.ai/json-schema/ui-generation.md): Generate deterministic UI specs from natural language using JSON Schema as the rendering contract.
+- [Union of Objects](https://docs.dottxt.ai/json-schema/union-of-objects.md): Use discriminated unions to route output into one valid object shape.
+- [Migrate from Other Providers](https://docs.dottxt.ai/migrate-from-other-providers.md): Switch from other providers to dottxt with one stable request shape.
+- [Provider Comparison](https://docs.dottxt.ai/providers-comparison.md): JSON Schema support across structured output providers.
+- [Quickstart](https://docs.dottxt.ai/quickstart.md): Run your first structured-output extraction in minutes.
+- [Supported JSON Schema Features](https://docs.dottxt.ai/supported-features.md): Quick reference for supported, unsupported, and partially supported JSON Schema keywords.
+
+## OpenAPI Specs
+
+- [dottxt-openapi](https://docs.dottxt.ai/openapi/dottxt-openapi.json)
+- [openapi](https://docs.dottxt.ai/api-reference/openapi.json)
+
+## Optional
+
+- [Pricing](https://dottxt.ai/pricing)

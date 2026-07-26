@@ -1,24 +1,130 @@
 aid: dottxt
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/dottxt.png
 name: dottxt
-description: 'dottxt is a company surfaced as a portfolio company of eqt-ventures and added to the API
-  Evangelist network as a stub for enrichment. Sector: artificial-intelligence. This profile is a lead
-  awaiting the enrichment pipeline.'
+description: >-
+  dottxt (styled .txt) is the company behind Outlines, the open-source
+  structured-generation library for LLMs with 65M+ downloads. Its hosted
+  platform API (api.dottxt.ai) is an OpenAI-compatible Chat Completions endpoint
+  that guarantees 100% schema-compliant model output by construction using
+  constrained decoding: pass a JSON Schema via `response_format` and the model
+  produces exactly that shape — no retries, no validation loops, no defensive
+  parsing. Output can be streamed as token deltas (SSE) or field-by-field as RFC
+  6902 JSON Patch events. dottxt also ships self-hosted, drop-in replacements for
+  vLLM, SGLang and TensorRT-LLM inference servers, and composable libraries
+  (dotjson for JSON Schema, dotgrammar for context-free grammars, dotlambda for
+  function calling). Backed by EQT Ventures and Seedcamp.
 url: https://raw.githubusercontent.com/api-evangelist/dottxt/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
 x-backed-by:
 - eqt-ventures
-x-tier: stub
+x-tier: enriched
 x-tier-reason: portfolio-lead
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-18'
 tags:
 - Company
 - Artificial Intelligence
-apis: []
+- LLM
+- Structured Outputs
+- JSON Schema
+- Machine Learning
+- Developer Tools
+- Constrained Decoding
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+apis:
+- aid: dottxt:dottxt-chat-api
+  name: dottxt Chat API
+  description: OpenAI-compatible chat completions with structured output.
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - Chat
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-chat-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-models-api
+  name: dottxt Models API
+  description: Models available to your API key.
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - Models
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-models-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+common:
+- type: DeveloperPortal
+  url: https://docs.dottxt.ai
+- type: Documentation
+  url: https://docs.dottxt.ai
+- type: APIReference
+  url: https://docs.dottxt.ai/api/overview
+- type: GettingStarted
+  url: https://docs.dottxt.ai/quickstart
+- type: SignUp
+  url: https://h1xbpbfsf0w.typeform.com/to/fwQNWmS8
+- type: Blog
+  url: https://blog.dottxt.ai/
+- type: GitHubOrganization
+  url: https://github.com/dottxt-ai
+- type: TermsOfService
+  url: https://dottxt.ai/terms-of-service
+- type: PrivacyPolicy
+  url: https://dottxt.ai/privacy-policy
+- type: Authentication
+  url: authentication/dottxt-authentication.yml
+- type: Conventions
+  url: conventions/dottxt-conventions.yml
+- type: ErrorCatalog
+  url: errors/dottxt-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/dottxt-lifecycle.yml
+- type: Conformance
+  url: conformance/dottxt-conformance.yml
+- type: Packages
+  url: packages/dottxt-packages.yml
+- type: SDKs
+  url: packages/dottxt-packages.yml
+- type: MCPServer
+  url: mcp/dottxt-mcp.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: LLMsTxt
+  url: llms/dottxt-llms.txt
+- type: DataModel
+  url: data-model/dottxt-data-model.yml
+- type: DomainSecurity
+  url: security/dottxt-domain-security.yml
+- type: AgenticAccess
+  url: agentic-access/dottxt-agentic-access.yml
+x-enrichment:
+  date: '2026-07-19'
+  status: backfilled
+  pass: local-v1
+  note: backfilled from .gitignore signal + verified work evidence
