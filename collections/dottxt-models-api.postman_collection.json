@@ -1,0 +1,162 @@
+{
+  "item": [
+    {
+      "id": "c3d5e80f-846c-41f6-8a1f-800d10a436a6",
+      "name": "Models",
+      "description": {
+        "content": "Models available to your API key.",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "eee8d6b1-dd04-4822-9456-9bc1100de3ad",
+          "name": "List Models",
+          "request": {
+            "name": "List Models",
+            "description": {
+              "content": "Return the list of models available to your API key.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "models"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "5dca3709-b460-40e0-bf5f-1dbd0d058401",
+              "name": "The list of available models.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "models"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"openai/gpt-oss-20b\",\n      \"object\": \"model\",\n      \"owned_by\": \"string\"\n    },\n    {\n      \"id\": \"openai/gpt-oss-20b\",\n      \"object\": \"model\",\n      \"owned_by\": \"string\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "efbaa9b7-d955-4ee1-87b3-e8e09a6c9972",
+              "name": "Missing or invalid API key.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "models"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"string\",\n    \"message\": \"string\",\n    \"type\": \"string\",\n    \"param\": \"string\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.dottxt.ai/v1",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "90717396-328d-4239-aaa1-ad14531583a0",
+    "name": "dottxt Platform Chat Models API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "OpenAI-compatible structured-output API from dottxt (.txt), the makers of Outlines. The API guarantees 100% schema-compliant model output by construction using constrained decoding. It follows the OpenAI Chat Completions request/response shape, so existing OpenAI SDKs work by changing the base URL and API key. Structured output is requested with the `response_format` parameter (JSON Schema), and results can be streamed as token deltas (SSE) or field-by-field as RFC 6902 JSON Patch events. This specification is a faithful transcription of the public API reference at https://docs.dottxt.ai/api/overview ; it is not published by dottxt.\n\nContact Support:\n Name: dottxt\n Email: contact@dottxt.co",
+      "type": "text/plain"
+    }
+  }
+}
