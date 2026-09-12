@@ -101,6 +101,8 @@ apis:
   - type: APIReference
     url: https://docs.dottxt.ai/api/overview
 common:
+- type: Website
+  url: https://dottxt.ai/
 - type: Overlay
   url: overlays/dottxt-platform-overlay.yaml
 - type: DeveloperPortal
