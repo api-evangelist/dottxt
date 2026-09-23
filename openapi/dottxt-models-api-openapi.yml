@@ -1,8 +1,8 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: dottxt Platform Chat Models API
+  title: dottxt Platform Models API
   version: v1
-  description: OpenAI-compatible structured-output API from dottxt (.txt), the makers of Outlines. The API guarantees 100% schema-compliant model output by construction using constrained decoding. It follows the OpenAI Chat Completions request/response shape, so existing OpenAI SDKs work by changing the base URL and API key. Structured output is requested with the `response_format` parameter (JSON Schema), and results can be streamed as token deltas (SSE) or field-by-field as RFC 6902 JSON Patch events. This specification is a faithful transcription of the public API reference at https://docs.dottxt.ai/api/overview ; it is not published by dottxt.
+  description: OpenAI-compatible structured-output API from dottxt (.txt), the makers of Outlines.
   contact:
     name: dottxt
     url: https://dottxt.ai/
@@ -53,16 +53,6 @@ components:
           example: model
         owned_by:
           type: string
-    ModelList:
-      type: object
-      properties:
-        object:
-          type: string
-          example: list
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Model'
     OpenAIErrorResponse:
       type: object
       required:
@@ -79,6 +69,16 @@ components:
               type: string
             param:
               type: string
+    ModelList:
+      type: object
+      properties:
+        object:
+          type: string
+          example: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
   securitySchemes:
     bearerAuth:
       type: http
