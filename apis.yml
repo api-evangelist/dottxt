@@ -48,13 +48,17 @@ x-tier-reason: portfolio-lead
 specificationVersion: '0.23'
 created: '2026-07-17'
 modified: '2026-07-18'
+x-docs-platform: mintlify
+x-docs-platform-confidence: medium
+x-docs-platform-checked: 2026-09-25
+x-docs-hosting: vercel
 tags:
 - Company
 - Artificial Intelligence
 - LLM
 - Structured Outputs
-- JSON-Schema
-- Machine-Learning
+- JSON Schema
+- Machine Learning
 - Developer Tools
 - Constrained Decoding
 tags_raw:
@@ -66,6 +70,8 @@ tags_raw:
 - Machine Learning
 - Developer Tools
 - Constrained Decoding
+- JSON-Schema
+- Machine-Learning
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com

@@ -84,6 +84,24 @@ paths:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
 components:
   schemas:
+    ResponseFormat:
+      type: object
+      description: Structured-output constraint. Use `json_schema` for schema-guaranteed output.
+      properties:
+        type:
+          type: string
+          enum:
+          - text
+          - json_object
+          - json_schema
+        json_schema:
+          type: object
+          properties:
+            name:
+              type: string
+            schema:
+              type: object
+              description: A JSON Schema document the output is guaranteed to satisfy.
     ChatCompletion:
       type: object
       properties:
@@ -103,64 +121,6 @@ components:
             $ref: '#/components/schemas/ChatCompletionChoice'
         usage:
           $ref: '#/components/schemas/Usage'
-    ResponseFormat:
-      type: object
-      description: Structured-output constraint. Use `json_schema` for schema-guaranteed output.
-      properties:
-        type:
-          type: string
-          enum:
-          - text
-          - json_object
-          - json_schema
-        json_schema:
-          type: object
-          properties:
-            name:
-              type: string
-            schema:
-              type: object
-              description: A JSON Schema document the output is guaranteed to satisfy.
-    OpenAIErrorResponse:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-            type:
-              type: string
-            param:
-              type: string
-    ChatMessage:
-      type: object
-      required:
-      - role
-      - content
-      properties:
-        role:
-          type: string
-          enum:
-          - system
-          - user
-          - assistant
-          - tool
-        content:
-          type: string
-    Usage:
-      type: object
-      properties:
-        prompt_tokens:
-          type: integer
-        completion_tokens:
-          type: integer
-        total_tokens:
-          type: integer
     ChatCompletionChoice:
       type: object
       properties:
@@ -233,6 +193,46 @@ components:
         user:
           type: string
           description: End-user identifier.
+    Usage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+        completion_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+    ChatMessage:
+      type: object
+      required:
+      - role
+      - content
+      properties:
+        role:
+          type: string
+          enum:
+          - system
+          - user
+          - assistant
+          - tool
+        content:
+          type: string
+    OpenAIErrorResponse:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            type:
+              type: string
+            param:
+              type: string
   securitySchemes:
     bearerAuth:
       type: http
