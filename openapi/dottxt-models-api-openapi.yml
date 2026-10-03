@@ -42,16 +42,17 @@ paths:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
 components:
   schemas:
-    ModelList:
+    Model:
       type: object
       properties:
+        id:
+          type: string
+          example: openai/gpt-oss-20b
         object:
           type: string
-          example: list
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Model'
+          example: model
+        owned_by:
+          type: string
     OpenAIErrorResponse:
       type: object
       required:
@@ -68,17 +69,16 @@ components:
               type: string
             param:
               type: string
-    Model:
+    ModelList:
       type: object
       properties:
-        id:
-          type: string
-          example: openai/gpt-oss-20b
         object:
           type: string
-          example: model
-        owned_by:
-          type: string
+          example: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
   securitySchemes:
     bearerAuth:
       type: http
