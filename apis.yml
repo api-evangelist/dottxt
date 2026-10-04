@@ -78,20 +78,6 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 apis:
-- aid: dottxt:dottxt-chat-api
-  name: dottxt Chat API
-  description: OpenAI-compatible chat completions with structured output.
-  humanURL: https://docs.dottxt.ai/api/overview
-  baseURL: https://api.dottxt.ai/v1
-  tags:
-  - Chat
-  properties:
-  - type: OpenAPI
-    url: openapi/dottxt-chat-api-openapi.yml
-  - type: Documentation
-    url: https://docs.dottxt.ai
-  - type: APIReference
-    url: https://docs.dottxt.ai/api/overview
 - aid: dottxt:dottxt-models-api
   name: dottxt Models API
   description: Models available to your API key.
@@ -102,6 +88,20 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/dottxt-models-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-chat-completions-api
+  name: dottxt Chat Completions API
+  description: OpenAI-compatible chat completions with structured output.
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - Chat Completions
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-chat-completions-api-openapi.yml
   - type: Documentation
     url: https://docs.dottxt.ai
   - type: APIReference
