@@ -61,6 +61,7 @@ tags:
 - Machine Learning
 - Developer Tools
 - Constrained Decoding
+- Inference
 tags_raw:
 - Company
 - Artificial Intelligence
@@ -72,6 +73,7 @@ tags_raw:
 - Constrained Decoding
 - JSON-Schema
 - Machine-Learning
+- Inference
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
