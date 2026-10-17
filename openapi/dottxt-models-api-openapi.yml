@@ -42,6 +42,17 @@ paths:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
 components:
   schemas:
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+          example: openai/gpt-oss-20b
+        object:
+          type: string
+          example: model
+        owned_by:
+          type: string
     ModelList:
       type: object
       properties:
@@ -68,17 +79,6 @@ components:
               type: string
             param:
               type: string
-    Model:
-      type: object
-      properties:
-        id:
-          type: string
-          example: openai/gpt-oss-20b
-        object:
-          type: string
-          example: model
-        owned_by:
-          type: string
   securitySchemes:
     bearerAuth:
       type: http
