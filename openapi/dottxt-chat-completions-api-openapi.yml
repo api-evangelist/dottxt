@@ -1,240 +1,551 @@
 openapi: 3.2.0
 info:
-  title: dottxt Platform Chat API
-  version: v1
-  description: OpenAI-compatible structured-output API from dottxt (.txt), the makers of Outlines.
-  contact:
-    name: dottxt
-    url: https://dottxt.ai/
-    email: contact@dottxt.co
-  x-provenance:
-    generated: '2026-07-18'
-    method: generated
-    source: https://docs.dottxt.ai/api/overview.md
+  title: dottxt Chat API
+  description: The dottxt API
+  version: 1.0.0
 servers:
 - url: https://api.dottxt.ai/v1
-  description: dottxt production API
-security:
-- bearerAuth: []
+  description: dottxt API
 tags:
 - name: Chat Completions
-  description: OpenAI-compatible chat completions with structured output.
+  description: 'Create model responses for chat conversations.
+
+
+    Supports:
+
+    - **Multi-turn dialogue** with conversation history
+
+    - **System prompts** to control model behavior
+
+    - **Tool calling** for function execution and structured outputs
+
+    - **Streaming** for real-time token delivery
+
+    - **Sampling parameters** like temperature, top_p, and frequency penalties'
 paths:
   /chat/completions:
     post:
-      operationId: createChatCompletion
       tags:
       - Chat Completions
-      summary: Create Chat Completion
-      description: Generate a model response from a message array, with support for token streaming, JSON Patch streaming, structured output via `response_format`, and tool calling. OpenAI Chat Completions compatible.
+      summary: Create chat completion
+      description: 'Creates a model response for the given chat conversation.
+
+
+        The conversation is provided as an array of messages, where each message has a `role` (system, user, assistant, or tool) and `content`.
+
+
+        Set `stream: true` to receive partial responses as server-sent events.'
+      operationId: chat_completions
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateChatCompletionRequest'
+              $ref: '#/components/schemas/ChatCompletionRequest'
+        required: true
       responses:
         '200':
-          description: Chat completion (or a stream of chunks when `stream` is set).
+          description: 'Chat completion generated successfully. Response framing depends on the `stream` parameter and `Accept` header:
+
+
+            - Default (`stream` unset or `false`): a single JSON `ChatCompletionResponse`.
+
+            - `stream: true`: an SSE stream of token deltas.
+
+            - `stream: "patch"`: an NDJSON stream of `JsonPatchOperation` records (one per line), or SSE if `Accept: text/event-stream` is sent.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatCompletion'
+                $ref: '#/components/schemas/ChatCompletionResponse'
+            application/x-ndjson:
+              schema:
+                $ref: '#/components/schemas/JsonPatchOperation'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/JsonPatchOperation'
         '400':
-          description: Invalid request format.
+          description: Invalid request - check that your messages array is properly formatted and all required fields are present.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '401':
-          description: Missing or invalid API key.
+          description: Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '402':
-          description: Insufficient credits.
+          description: Insufficient credits. Top up your account to continue making requests.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '403':
-          description: No access to the requested model.
+          description: Your API key does not have access to the requested model.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '404':
-          description: Model not found.
+          description: The specified model does not exist. Use `GET /models` to list available models.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '429':
-          description: Rate limit exceeded.
+          description: Rate limit exceeded. Back off and retry after a short delay.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
         '500':
-          description: Server error.
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIErrorResponse'
+      security:
+      - BearerAuth: []
 components:
   schemas:
-    ChatMessage:
+    FunctionDefinition:
       type: object
+      description: Definition of a function that can be called by the model.
       required:
-      - role
-      - content
+      - name
       properties:
-        role:
+        description:
+          type:
+          - string
+          - 'null'
+          description: A description of what the function does.
+          example: Get the current weather in a location
+        name:
           type: string
-          enum:
-          - system
-          - user
-          - assistant
-          - tool
-        content:
-          type: string
-    ChatCompletion:
+          description: The name of the function.
+          example: get_weather
+        parameters:
+          description: The parameters the function accepts, as a JSON Schema object.
+      example:
+        description: Get the current weather in a location
+        name: get_weather
+        parameters:
+          properties:
+            location:
+              description: City name
+              type: string
+          required:
+          - location
+          type: object
+    OpenAIError:
       type: object
+      description: OpenAI-compatible error details.
+      required:
+      - message
+      - type
       properties:
-        id:
+        code:
+          type:
+          - string
+          - 'null'
+          description: The error code.
+          example: invalid_api_key
+        message:
           type: string
-        object:
+          description: The error message.
+          example: Invalid API key provided
+        param:
+          type:
+          - string
+          - 'null'
+          description: The parameter that caused the error, if applicable.
+        type:
           type: string
-          example: chat.completion
-        created:
-          type: integer
-          format: int64
-        model:
-          type: string
+          description: The type of error.
+          example: authentication_error
+      example:
+        code: invalid_api_key
+        message: Invalid API key provided
+        type: authentication_error
+    ChatCompletionResponse:
+      type: object
+      description: Response from chat completions.
+      required:
+      - id
+      - object
+      - created
+      - model
+      - choices
+      properties:
         choices:
           type: array
           items:
-            $ref: '#/components/schemas/ChatCompletionChoice'
+            $ref: '#/components/schemas/ChatChoice'
+          description: A list of chat completion choices.
+        created:
+          type: integer
+          format: int64
+          description: The Unix timestamp of when the chat completion was created.
+          example: 1703187200
+        id:
+          type: string
+          description: A unique identifier for the chat completion.
+          example: chatcmpl-abc123
+        model:
+          type: string
+          description: The model used for the chat completion.
+          example: Qwen/Qwen3-30B-A3B-FP8
+        object:
+          type: string
+          description: The object type, always "chat.completion".
+          example: chat.completion
+        system_fingerprint:
+          type:
+          - string
+          - 'null'
+          description: The system fingerprint of the model.
         usage:
-          $ref: '#/components/schemas/Usage'
-    CreateChatCompletionRequest:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Usage'
+            description: Usage statistics for the completion request.
+      example:
+        choices:
+        - finish_reason: stop
+          index: 0
+          message:
+            content: A doubleword is a data unit that is twice the size of a standard word in computer architecture, typically 32 or 64 bits depending on the system.
+            role: assistant
+        created: 1703187200
+        id: chatcmpl-abc123
+        model: Qwen/Qwen3-30B-A3B-FP8
+        object: chat.completion
+        usage:
+          completion_tokens: 36
+          prompt_tokens: 24
+          total_tokens: 60
+    ChatChoice:
       type: object
+      description: A chat completion choice.
+      required:
+      - index
+      - message
+      properties:
+        finish_reason:
+          type:
+          - string
+          - 'null'
+          description: The reason the model stopped generating tokens.
+          example: stop
+        index:
+          type: integer
+          format: int32
+          description: The index of the choice in the list of choices.
+          example: 0
+        message:
+          $ref: '#/components/schemas/ChatMessage'
+          description: The chat completion message generated by the model.
+      example:
+        finish_reason: stop
+        index: 0
+        message:
+          content: A doubleword is a data unit that is twice the size of a standard word in computer architecture.
+          role: assistant
+    JsonPatchOperation:
+      type: object
+      description: 'An RFC 6902 JSON Patch operation, emitted one per line (NDJSON) or per SSE event when `stream: "patch"` is set on `/chat/completions`. The first record seeds the document root (`path: ""` with `value: {}` for object-rooted schemas, `[]` for array-rooted). Subsequent records fill in leaf fields and seed nested containers in schema order. Applying the ops in order reconstructs the same document a non-streaming request would return.'
+      required:
+      - op
+      - path
+      - value
+      properties:
+        op:
+          type: string
+          enum:
+          - add
+          description: The RFC 6902 operation. Always `"add"` in patch streaming mode.
+          example: add
+        path:
+          type: string
+          description: JSON Pointer to the location being filled in. Empty string for the root seed; otherwise a leading `/` followed by the field key (e.g., `/intent`, `/steps/0`, `/address/city`).
+          example: /intent
+        value:
+          description: The inserted value. For leaf fields, a JSON primitive (string, number, boolean, null). For nested objects and arrays, an empty container (`{}` or `[]`) that subsequent ops will fill.
+      example:
+        op: add
+        path: /intent
+        value: billing
+    ChatCompletionRequest:
+      type: object
+      description: Request body for chat completions.
       required:
       - model
       - messages
       properties:
-        model:
-          type: string
-          description: Model ID to use.
-          example: openai/gpt-oss-20b
+        frequency_penalty:
+          type:
+          - number
+          - 'null'
+          format: float
+          description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on
+
+            their existing frequency in the text so far.'
+          example: 0
+        max_tokens:
+          type:
+          - integer
+          - 'null'
+          format: int32
+          description: The maximum number of tokens to generate in the chat completion.
+          example: 256
         messages:
           type: array
-          description: The conversation so far, as an array of role/content messages.
           items:
             $ref: '#/components/schemas/ChatMessage'
+          description: A list of messages comprising the conversation so far.
+        model:
+          type: string
+          description: ID of the model to use.
+          example: Qwen/Qwen3-30B-A3B-FP8
+        n:
+          type:
+          - integer
+          - 'null'
+          format: int32
+          description: How many chat completion choices to generate for each input message.
+          example: 1
+        presence_penalty:
+          type:
+          - number
+          - 'null'
+          format: float
+          description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on
+
+            whether they appear in the text so far.'
+          example: 0
+        stop:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: Up to 4 sequences where the API will stop generating further tokens.
         response_format:
-          $ref: '#/components/schemas/ResponseFormat'
+          description: 'Output format for structured responses. Set to `{"type": "json_schema", "json_schema": {...}}` to constrain the response to a JSON schema. Required when `stream` is `"patch"`.'
+        seed:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          description: Random seed for sampling. If provided and supported by the model, sampling is deterministic.
         stream:
-          description: '`false` (default) returns one JSON response; `true` streams token deltas as SSE; `"patch"` streams RFC 6902 JSON Patch operations per field (NDJSON by default, or SSE with `Accept: text/event-stream`).'
           oneOf:
           - type: boolean
+            description: Set to `true` to receive partial token deltas as Server-Sent Events.
           - type: string
             enum:
             - patch
+            description: 'Set to `"patch"` to stream the structured response field-by-field as RFC 6902 JSON Patch `add` operations. Requires `response_format` with a JSON schema. Defaults to NDJSON framing; send `Accept: text/event-stream` for SSE.'
+          - type: 'null'
+          description: Streaming mode. `false`/unset returns a single JSON response. `true` streams token deltas as SSE. `"patch"` streams one JSON Patch `add` per schema field — see the [JSON Patch streaming reference](https://docs.doubleword.ai/api/chat-completions#json-patch-streaming).
+          example: false
         temperature:
-          type: number
-          minimum: 0
-          maximum: 2
-        max_tokens:
-          type: integer
-          format: int32
-        top_p:
-          type: number
-        frequency_penalty:
-          type: number
-          minimum: -2
-          maximum: 2
-        presence_penalty:
-          type: number
-          minimum: -2
-          maximum: 2
-        seed:
-          type: integer
-          format: int64
-        stop:
-          type: array
-          maxItems: 4
-          items:
-            type: string
-        n:
-          type: integer
-          format: int32
-        tools:
-          type: array
-          description: Functions the model may call.
-          items:
-            type: object
+          type:
+          - number
+          - 'null'
+          format: float
+          description: What sampling temperature to use, between 0 and 2.
+          example: 0.7
         tool_choice:
-          description: Controls tool invocation.
+          description: Controls which (if any) tool is called by the model.
+        tools:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/Tool'
+          description: A list of tools the model may call.
+        top_p:
+          type:
+          - number
+          - 'null'
+          format: float
+          description: An alternative to sampling with temperature, called nucleus sampling.
+          example: 1
         user:
-          type: string
-          description: End-user identifier.
-    ResponseFormat:
+          type:
+          - string
+          - 'null'
+          description: A unique identifier representing your end-user.
+      example:
+        max_tokens: 256
+        messages:
+        - content: You are a helpful assistant.
+          role: system
+        - content: What is a doubleword?
+          role: user
+        model: Qwen/Qwen3-30B-A3B-FP8
+        temperature: 0.7
+    Tool:
       type: object
-      description: Structured-output constraint. Use `json_schema` for schema-guaranteed output.
+      description: A tool that the model may call.
+      required:
+      - type
+      - function
       properties:
+        function:
+          $ref: '#/components/schemas/FunctionDefinition'
+          description: The function definition.
         type:
           type: string
-          enum:
-          - text
-          - json_object
-          - json_schema
-        json_schema:
-          type: object
-          properties:
-            name:
-              type: string
-            schema:
-              type: object
-              description: A JSON Schema document the output is guaranteed to satisfy.
+          description: The type of tool (currently only "function").
+          example: function
+      example:
+        function:
+          description: Get the current weather in a location
+          name: get_weather
+          parameters:
+            properties:
+              location:
+                description: City name
+                type: string
+            required:
+            - location
+            type: object
+        type: function
+    ChatMessage:
+      type: object
+      description: A message in a chat conversation.
+      required:
+      - role
+      properties:
+        content:
+          type:
+          - string
+          - 'null'
+          description: The content of the message.
+          example: What is a doubleword?
+        name:
+          type:
+          - string
+          - 'null'
+          description: The name of the author (for function/tool messages).
+        role:
+          type: string
+          description: The role of the message author (system, user, assistant, tool, function).
+          example: user
+        tool_call_id:
+          type:
+          - string
+          - 'null'
+          description: The ID of the tool call this message is responding to.
+        tool_calls:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          description: Tool calls made by the assistant.
+      example:
+        content: What is a doubleword?
+        role: user
+    Usage:
+      type: object
+      description: Token usage statistics.
+      required:
+      - prompt_tokens
+      - completion_tokens
+      - total_tokens
+      properties:
+        completion_tokens:
+          type: integer
+          format: int32
+          description: Number of tokens in the generated completion.
+          example: 36
+        prompt_tokens:
+          type: integer
+          format: int32
+          description: Number of tokens in the prompt.
+          example: 24
+        total_tokens:
+          type: integer
+          format: int32
+          description: Total number of tokens used in the request.
+          example: 60
+      example:
+        completion_tokens: 36
+        prompt_tokens: 24
+        total_tokens: 60
+    ToolCall:
+      type: object
+      description: A tool call made by the model.
+      required:
+      - id
+      - type
+      - function
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionCall'
+          description: The function that was called.
+        id:
+          type: string
+          description: The ID of the tool call.
+          example: call_abc123
+        type:
+          type: string
+          description: The type of tool (currently only "function").
+          example: function
+      example:
+        function:
+          arguments: '{"location": "San Francisco"}'
+          name: get_weather
+        id: call_abc123
+        type: function
+    FunctionCall:
+      type: object
+      description: A function call within a tool call.
+      required:
+      - name
+      - arguments
+      properties:
+        arguments:
+          type: string
+          description: The arguments to pass to the function, as a JSON string.
+          example: '{"location": "San Francisco"}'
+        name:
+          type: string
+          description: The name of the function to call.
+          example: get_weather
+      example:
+        arguments: '{"location": "San Francisco"}'
+        name: get_weather
     OpenAIErrorResponse:
       type: object
+      description: OpenAI-compatible error response.
       required:
       - error
       properties:
         error:
-          type: object
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-            type:
-              type: string
-            param:
-              type: string
-    Usage:
-      type: object
-      properties:
-        prompt_tokens:
-          type: integer
-        completion_tokens:
-          type: integer
-        total_tokens:
-          type: integer
-    ChatCompletionChoice:
-      type: object
-      properties:
-        index:
-          type: integer
-        finish_reason:
-          type: string
-          example: stop
-        message:
-          $ref: '#/components/schemas/ChatMessage'
+          $ref: '#/components/schemas/OpenAIError'
+          description: The error details.
+      example:
+        error:
+          code: invalid_api_key
+          message: Invalid API key provided
+          type: authentication_error
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
-      description: 'API key passed as a bearer token: `Authorization: Bearer $DOTTXT_API_KEY`. Keys use the prefix `sk-dottxt-`.'
+      bearerFormat: API Key
+      description: 'API key authentication. Include your key in the `Authorization` header:
+
+
+        ```
+
+        Authorization: Bearer YOUR_API_KEY
+
+        ```
+
+
+        API keys can be created and managed in the dashboard.'

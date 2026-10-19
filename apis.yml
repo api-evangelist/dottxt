@@ -94,9 +94,141 @@ apis:
     url: https://docs.dottxt.ai
   - type: APIReference
     url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-batches-api
+  name: dottxt Batches API
+  description: >-
+    Process large volumes of requests asynchronously.
+
+
+    Batch processing is ideal when you:
+
+    - Have many requests that don't need immediate responses
+
+    - Want to process data in bulk (e.g., embeddings for a document corpus)
+
+    - Are running offline evaluations or data pipelines
+
+
+    Choose your completion window: 1 hour or 24 hours. You can track progress, cancel in-flight batches,
+    and retry failed requests.
+
+
+    [Getting started with the Batch API →](https://docs.doubleword.ai/batches/getting-started-with-batched-api)
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - batches
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-batches-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-embeddings-api
+  name: dottxt Embeddings API
+  description: >-
+    Generate vector representations of text.
+
+
+    Use embeddings for:
+
+    - **Semantic search** - find content by meaning, not just keywords
+
+    - **Clustering** - group similar documents together
+
+    - **Classification** - categorize text based on similarity to examples
+
+    - **Recommendations** - suggest related content
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - embeddings
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-embeddings-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-files-api
+  name: dottxt Files API
+  description: >-
+    Upload and manage JSONL files for batch processing.
+
+
+    Each line in the file should be a JSON object with:
+
+    - `custom_id` - your identifier for tracking the request
+
+    - `method` - HTTP method (POST)
+
+    - `url` - endpoint path (e.g., `/v1/chat/completions`)
+
+    - `body` - the request payload
+
+
+    [Learn more about the JSONL file format →](https://docs.doubleword.ai/batches/jsonl-files)
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - files
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-files-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
+- aid: dottxt:dottxt-responses-api-api
+  name: dottxt Responses API
+  description: >-
+    Create model responses with enhanced capabilities.
+
+
+    Open Responses compatible endpoint providing advanced features:
+
+
+    - **Reasoning models** - Control computational effort with `reasoning` parameter
+
+    - **Stateful conversations** - Maintain context across turns with `previous_response_id`
+
+    - **Flexible input** - Use simple strings or full message arrays
+
+    - **Text output configuration** - Structured outputs via `text` parameter
+
+    - **Context management** - Handle overflow with `truncation` parameter
+
+
+    [Open Responses API Reference →](https://www.openresponses.org/reference)
+  humanURL: https://docs.dottxt.ai/api/overview
+  baseURL: https://api.dottxt.ai/v1
+  tags:
+  - responses-api
+  properties:
+  - type: OpenAPI
+    url: openapi/dottxt-responses-api-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dottxt.ai
+  - type: APIReference
+    url: https://docs.dottxt.ai/api/overview
 - aid: dottxt:dottxt-chat-completions-api
   name: dottxt Chat Completions API
-  description: OpenAI-compatible chat completions with structured output.
+  description: >-
+    Create model responses for chat conversations.
+
+
+    Supports:
+
+    - **Multi-turn dialogue** with conversation history
+
+    - **System prompts** to control model behavior
+
+    - **Tool calling** for function execution and structured outputs
+
+    - **Streaming** for real-time token delivery
+
+    - **Sampling parameters** like temperature, top_p, and frequency penalties
   humanURL: https://docs.dottxt.ai/api/overview
   baseURL: https://api.dottxt.ai/v1
   tags:

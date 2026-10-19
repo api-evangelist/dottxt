@@ -1,25 +1,23 @@
 {
   "provider": "dottxt",
   "sources": [
-    "_original/dottxt-platform-openapi.yml"
+    "_original/dottxt-openapi.json"
   ],
   "outputs": [
+    "dottxt-batches-api-openapi.yml",
     "dottxt-chat-api-openapi.yml",
-    "dottxt-models-api-openapi.yml"
+    "dottxt-embeddings-api-openapi.yml",
+    "dottxt-files-api-openapi.yml",
+    "dottxt-models-api-openapi.yml",
+    "dottxt-responses-api-api-openapi.yml"
   ],
-  "archived": [
-    "deleted 1 superseded output(s) from the previous generation"
-  ],
+  "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
-    "dottxt-platform-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "superseded outputs removed: dottxt-chat-completions-api-openapi.yml",
-    "apis.yml register: written (+1 apis, 2 total)"
+    "dottxt-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "apis.yml register: written (+5 apis, 6 total)"
   ],
-  "skipped": [
-    "dottxt-chat-completions-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dottxt-models-api-openapi.yml: previously refined output, superseded by openapi/_original/"
-  ]
+  "skipped": []
 }

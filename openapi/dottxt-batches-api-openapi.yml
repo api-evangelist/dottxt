@@ -1,0 +1,741 @@
+openapi: 3.2.0
+info:
+  title: dottxt Batches API
+  description: The dottxt API
+  version: 1.0.0
+servers:
+- url: https://api.dottxt.ai/v1
+  description: dottxt API
+tags:
+- name: Batches
+  description: 'Process large volumes of requests asynchronously.
+
+
+    Batch processing is ideal when you:
+
+    - Have many requests that don''t need immediate responses
+
+    - Want to process data in bulk (e.g., embeddings for a document corpus)
+
+    - Are running offline evaluations or data pipelines
+
+
+    Choose your completion window: 1 hour or 24 hours. You can track progress, cancel in-flight batches, and retry failed requests.
+
+
+    Getting started with the Batch API →'
+paths:
+  /batches:
+    get:
+      tags:
+      - Batches
+      summary: List batches
+      description: 'Returns a paginated list of your batches, newest first.
+
+
+        Use cursor-based pagination: pass `last_id` from the response as the `after` parameter to fetch the next page.'
+      operationId: list_batches
+      parameters:
+      - name: pagination
+        in: query
+        description: Pagination parameters
+        required: true
+        schema:
+          type: object
+          description: 'Cursor-based pagination parameters for OpenAI-compatible endpoints.
+
+
+            Used by batch and files APIs following OpenAI''s pagination pattern:
+
+            - `after`: Cursor ID to start after (exclusive)
+
+            - `limit`: Maximum items to return (default: 20, max: 100)'
+          properties:
+            after:
+              type:
+              - string
+              - 'null'
+              description: A cursor for use in pagination. `after` is an object ID that defines your place in the list.
+            limit:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Maximum number of items to return (default: 20, max: 100)'
+      - name: search
+        in: query
+        description: Search query to filter batches by endpoint or input filename (case-insensitive substring match)
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      - name: include
+        in: query
+        description: 'Comma-separated list of related resources to include. Supported: "analytics"'
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+        example: analytics
+      responses:
+        '200':
+          description: List of batches. Check `has_more` to determine if additional pages exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchListResponse'
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+    post:
+      tags:
+      - Batches
+      summary: Create batch
+      description: 'Create and start processing a batch from an uploaded file.
+
+
+        The batch will begin processing immediately. Use `GET /batches/{batch_id}` to monitor progress.'
+      operationId: create_batch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Batch created and queued for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: Invalid request - check that the endpoint and completion_window are valid.
+        '404':
+          description: Input file not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}:
+    get:
+      tags:
+      - Batches
+      summary: Retrieve batch
+      description: 'Retrieve the current status and details of a batch.
+
+
+        Poll this endpoint to monitor progress. Results are streamed to `output_file_id` as they complete - you can start downloading results before the batch finishes.'
+      operationId: get_batch
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Batch details including status, progress counts, and output file IDs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+    delete:
+      tags:
+      - Batches
+      summary: Delete batch
+      description: 'Permanently delete a batch and all its associated data.
+
+
+        This action cannot be undone. The input file is not deleted.'
+      operationId: delete_batch
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Batch deleted successfully.
+        '400':
+          description: Invalid batch ID format.
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}/analytics:
+    get:
+      tags:
+      - Batches
+      summary: Get batch analytics
+      description: 'Retrieve aggregated metrics for a batch including token usage, costs, and latency statistics.
+
+
+        Analytics update in real-time as requests complete.'
+      operationId: get_batch_analytics
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Batch analytics with token counts, costs, and performance metrics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchAnalytics'
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}/cancel:
+    post:
+      tags:
+      - Batches
+      summary: Cancel batch
+      description: 'Cancel an in-progress batch.
+
+
+        Pending requests will not be processed. Requests already in progress will complete. The batch status will transition to `cancelling` then `cancelled`.'
+      operationId: cancel_batch
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Cancellation initiated. The batch will finish processing in-flight requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}/results:
+    get:
+      tags:
+      - Batches
+      summary: Get batch results
+      description: 'Stream batch results with merged input/output data as JSONL.
+
+
+        Each line contains the original input body, response body (for completed requests), error message (for failed requests), and current status. Results are filtered to show exactly one entry per input template (excluding superseded requests from escalation races).
+
+
+        Supports pagination via `limit` and `skip` query parameters, and filtering by `custom_id` via the `search` parameter.'
+      operationId: get_batch_results
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      - name: pagination
+        in: query
+        description: Pagination parameters (limit and skip)
+        required: true
+        schema:
+          type: object
+          description: 'Standard pagination parameters for admin API list endpoints.
+
+
+            All admin endpoints use consistent offset-based pagination with:
+
+            - `skip`: Number of items to skip (default: 0)
+
+            - `limit`: Maximum items to return (default: 10, max: 100)
+
+
+            The `limit` is clamped to ensure it''s always between 1 and 100,
+
+            preventing both zero-result queries and excessive data fetching.'
+          properties:
+            limit:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Maximum number of items to return (default: 10, max: 100)'
+            skip:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Number of items to skip (default: 0)'
+      - name: search
+        in: query
+        description: Search query to filter by custom_id (case-insensitive substring match)
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      - name: status
+        in: query
+        description: Filter by request status (completed, failed, pending, in_progress)
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '200':
+          description: Batch results as newline-delimited JSON. Check the `X-Incomplete` header to determine if more results exist.
+          content:
+            application/x-ndjson: {}
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}/retry:
+    post:
+      tags:
+      - Batches
+      summary: Retry failed requests
+      description: 'Retry all failed requests in a batch.
+
+
+        Failed requests are reset to pending and will be processed again. Use this after fixing transient issues or increasing rate limits.'
+      operationId: retry_failed_batch_requests
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Failed requests queued for retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: No failed requests to retry in this batch.
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /batches/{batch_id}/retry-requests:
+    post:
+      tags:
+      - Batches
+      summary: Retry specific requests
+      description: 'Retry specific failed requests by their IDs.
+
+
+        Use this for fine-grained control over which requests to retry, rather than retrying all failures.'
+      operationId: retry_specific_requests
+      parameters:
+      - name: batch_id
+        in: path
+        description: The batch ID returned when the batch was created.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetryRequestsRequest'
+        required: true
+      responses:
+        '200':
+          description: Specified requests queued for retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: No valid request IDs provided.
+        '404':
+          description: Batch not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+components:
+  schemas:
+    BatchObjectType:
+      type: string
+      description: Object type - always "batch"
+      enum:
+      - batch
+    BatchError:
+      type: object
+      description: Individual error in a batch
+      required:
+      - message
+      properties:
+        code:
+          type:
+          - string
+          - 'null'
+          description: An error code identifying the error type
+          example: invalid_request
+        line:
+          type:
+          - integer
+          - 'null'
+          format: int32
+          description: The line number of the input file where the error occurred, if applicable
+          example: 5
+        message:
+          type: string
+          description: A human-readable message providing more details about the error
+          example: Invalid JSON on line 5
+        param:
+          type:
+          - string
+          - 'null'
+          description: The name of the parameter that caused the error, if applicable
+      example:
+        code: invalid_request
+        line: 5
+        message: Invalid JSON on line 5
+    BatchListResponse:
+      type: object
+      description: Response for batch list
+      required:
+      - object
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchResponse'
+        first_id:
+          type:
+          - string
+          - 'null'
+          example: batch-abc123
+        has_more:
+          type: boolean
+          example: false
+        last_id:
+          type:
+          - string
+          - 'null'
+          example: batch-abc123
+        object:
+          $ref: '#/components/schemas/ListObjectType'
+      example:
+        data:
+        - completion_window: 24h
+          created_at: 1703187200
+          endpoint: /v1/chat/completions
+          id: batch-abc123
+          input_file_id: file-abc123
+          object: batch
+          request_counts:
+            completed: 98
+            failed: 2
+            total: 100
+          status: completed
+        first_id: batch-abc123
+        has_more: false
+        last_id: batch-abc123
+        object: list
+    BatchResponse:
+      type: object
+      description: Batch object response (OpenAI-compatible)
+      required:
+      - id
+      - object
+      - endpoint
+      - input_file_id
+      - completion_window
+      - status
+      - created_at
+      - request_counts
+      properties:
+        analytics:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/BatchAnalytics'
+            description: Aggregated analytics metrics (only included when requested via `include=analytics`)
+        cancelled_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        cancelling_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        completed_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          example: 1703190800
+        completion_window:
+          type: string
+          description: The time window within which the batch should be processed (e.g., "24h", "1h").
+          example: 24h
+        created_at:
+          type: integer
+          format: int64
+          example: 1703187200
+        endpoint:
+          type: string
+          example: /v1/chat/completions
+        error_file_id:
+          type:
+          - string
+          - 'null'
+        errors:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/BatchErrors'
+        expired_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        expires_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        failed_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        finalizing_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        id:
+          type: string
+          example: batch-abc123
+        in_progress_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        input_file_id:
+          type: string
+          example: file-abc123
+        metadata:
+          type:
+          - object
+          - 'null'
+          additionalProperties:
+            type: string
+          propertyNames:
+            type: string
+        object:
+          $ref: '#/components/schemas/BatchObjectType'
+        output_file_id:
+          type:
+          - string
+          - 'null'
+          example: file-xyz789
+        request_counts:
+          $ref: '#/components/schemas/RequestCounts'
+        status:
+          type: string
+          example: completed
+      example:
+        completed_at: 1703190800
+        completion_window: 24h
+        created_at: 1703187200
+        endpoint: /v1/chat/completions
+        id: batch-abc123
+        input_file_id: file-abc123
+        object: batch
+        output_file_id: file-xyz789
+        request_counts:
+          completed: 98
+          failed: 2
+          total: 100
+        status: completed
+    CreateBatchRequest:
+      type: object
+      description: Request body for creating a batch
+      required:
+      - input_file_id
+      - endpoint
+      - completion_window
+      properties:
+        completion_window:
+          type: string
+          description: 'The time window within which the batch should be processed (e.g., "24h", "1h").
+
+            Allowed values are configured per instance.'
+          example: 24h
+        endpoint:
+          type: string
+          description: 'The endpoint to be used for all requests in the batch.
+
+            Supported values are configured via `batches.allowed_url_paths`.'
+          example: /v1/chat/completions
+        input_file_id:
+          type: string
+          description: The ID of an uploaded file that contains requests for the new batch
+          example: file-abc123
+        metadata:
+          type:
+          - object
+          - 'null'
+          description: Optional metadata (up to 16 key-value pairs)
+          additionalProperties:
+            type: string
+          propertyNames:
+            type: string
+      example:
+        completion_window: 24h
+        endpoint: /v1/chat/completions
+        input_file_id: file-abc123
+    ListObjectType:
+      type: string
+      description: Object type for lists - always "list"
+      enum:
+      - list
+    BatchAnalytics:
+      type: object
+      description: Aggregated analytics metrics for batch requests
+      required:
+      - total_requests
+      - total_prompt_tokens
+      - total_completion_tokens
+      - total_tokens
+      properties:
+        avg_duration_ms:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Average request duration in milliseconds
+          example: 1250.5
+        avg_ttfb_ms:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Average time to first byte in milliseconds
+          example: 150.2
+        total_completion_tokens:
+          type: integer
+          format: int64
+          description: Total completion tokens across all requests
+          example: 25000
+        total_cost:
+          type:
+          - string
+          - 'null'
+          description: Total cost in credits (if pricing is available)
+          example: '0.75'
+        total_prompt_tokens:
+          type: integer
+          format: int64
+          description: Total prompt tokens across all requests
+          example: 50000
+        total_requests:
+          type: integer
+          format: int64
+          description: Total number of requests with analytics data
+          example: 100
+        total_tokens:
+          type: integer
+          format: int64
+          description: Total tokens (prompt + completion) across all requests
+          example: 75000
+      example:
+        avg_duration_ms: 1250.5
+        avg_ttfb_ms: 150.2
+        total_completion_tokens: 25000
+        total_cost: '0.75'
+        total_prompt_tokens: 50000
+        total_requests: 100
+        total_tokens: 75000
+    BatchErrors:
+      type: object
+      description: Batch-level errors
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchError'
+          description: Array of error details
+      example:
+        data:
+        - code: invalid_request
+          line: 5
+          message: Invalid JSON on line 5
+    RetryRequestsRequest:
+      type: object
+      description: Request body for retrying specific requests
+      required:
+      - request_ids
+      properties:
+        request_ids:
+          type: array
+          items:
+            type: string
+          description: Array of request IDs to retry
+      example:
+        request_ids:
+        - req-abc123
+        - req-def456
+    RequestCounts:
+      type: object
+      description: Request counts for a batch
+      required:
+      - total
+      - completed
+      - failed
+      properties:
+        completed:
+          type: integer
+          format: int64
+          example: 98
+        failed:
+          type: integer
+          format: int64
+          example: 2
+        total:
+          type: integer
+          format: int64
+          example: 100
+      example:
+        completed: 98
+        failed: 2
+        total: 100
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API key authentication. Include your key in the `Authorization` header:
+
+
+        ```
+
+        Authorization: Bearer YOUR_API_KEY
+
+        ```
+
+
+        API keys can be created and managed in the dashboard.'

@@ -1,0 +1,12 @@
+{
+ "url": "https://docs.dottxt.ai/openapi/dottxt-openapi.json",
+ "final": "https://docs.dottxt.ai/openapi/dottxt-openapi.json",
+ "status": 200,
+ "content_type": "application/json",
+ "bytes": 103897,
+ "sha256": "72b7aceffffbca3dc033dcb2f8f613a5d183c1fbac1c1d410a78738cc15c333f",
+ "fetched_at": "2026-10-19",
+ "fetched_by": "APIEvangelist-Harvest/1.0 (+https://apievangelist.com)",
+ "match": "byte-identical",
+ "note": "re-archived: the provider's current document replaced a stale archive (roadmap#793); the old files are in openapi/_superseded/2026-10-19-stale"
+}

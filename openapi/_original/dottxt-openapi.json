@@ -1,0 +1,3254 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "dottxt API",
+    "description": "The dottxt API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.dottxt.ai/v1",
+      "description": "dottxt API"
+    }
+  ],
+  "paths": {
+    "/batches": {
+      "get": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "List batches",
+        "description": "Returns a paginated list of your batches, newest first.\n\nUse cursor-based pagination: pass `last_id` from the response as the `after` parameter to fetch the next page.",
+        "operationId": "list_batches",
+        "parameters": [
+          {
+            "name": "pagination",
+            "in": "query",
+            "description": "Pagination parameters",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "description": "Cursor-based pagination parameters for OpenAI-compatible endpoints.\n\nUsed by batch and files APIs following OpenAI's pagination pattern:\n- `after`: Cursor ID to start after (exclusive)\n- `limit`: Maximum items to return (default: 20, max: 100)",
+              "properties": {
+                "after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "A cursor for use in pagination. `after` is an object ID that defines your place in the list."
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Maximum number of items to return (default: 20, max: 100)"
+                }
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search query to filter batches by endpoint or input filename (case-insensitive substring match)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Comma-separated list of related resources to include. Supported: \"analytics\"",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "analytics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of batches. Check `has_more` to determine if additional pages exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Create batch",
+        "description": "Create and start processing a batch from an uploaded file.\n\nThe batch will begin processing immediately. Use `GET /batches/{batch_id}` to monitor progress.",
+        "operationId": "create_batch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Batch created and queued for processing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request - check that the endpoint and completion_window are valid."
+          },
+          "404": {
+            "description": "Input file not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}": {
+      "get": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Retrieve batch",
+        "description": "Retrieve the current status and details of a batch.\n\nPoll this endpoint to monitor progress. Results are streamed to `output_file_id` as they complete - you can start downloading results before the batch finishes.",
+        "operationId": "get_batch",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch details including status, progress counts, and output file IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Delete batch",
+        "description": "Permanently delete a batch and all its associated data.\n\nThis action cannot be undone. The input file is not deleted.",
+        "operationId": "delete_batch",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Batch deleted successfully."
+          },
+          "400": {
+            "description": "Invalid batch ID format."
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/analytics": {
+      "get": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Get batch analytics",
+        "description": "Retrieve aggregated metrics for a batch including token usage, costs, and latency statistics.\n\nAnalytics update in real-time as requests complete.",
+        "operationId": "get_batch_analytics",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch analytics with token counts, costs, and performance metrics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAnalytics"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/cancel": {
+      "post": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Cancel batch",
+        "description": "Cancel an in-progress batch.\n\nPending requests will not be processed. Requests already in progress will complete. The batch status will transition to `cancelling` then `cancelled`.",
+        "operationId": "cancel_batch",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation initiated. The batch will finish processing in-flight requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/results": {
+      "get": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Get batch results",
+        "description": "Stream batch results with merged input/output data as JSONL.\n\nEach line contains the original input body, response body (for completed requests), error message (for failed requests), and current status. Results are filtered to show exactly one entry per input template (excluding superseded requests from escalation races).\n\nSupports pagination via `limit` and `skip` query parameters, and filtering by `custom_id` via the `search` parameter.",
+        "operationId": "get_batch_results",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagination",
+            "in": "query",
+            "description": "Pagination parameters (limit and skip)",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "description": "Standard pagination parameters for admin API list endpoints.\n\nAll admin endpoints use consistent offset-based pagination with:\n- `skip`: Number of items to skip (default: 0)\n- `limit`: Maximum items to return (default: 10, max: 100)\n\nThe `limit` is clamped to ensure it's always between 1 and 100,\npreventing both zero-result queries and excessive data fetching.",
+              "properties": {
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Maximum number of items to return (default: 10, max: 100)"
+                },
+                "skip": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Number of items to skip (default: 0)"
+                }
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search query to filter by custom_id (case-insensitive substring match)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by request status (completed, failed, pending, in_progress)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch results as newline-delimited JSON. Check the `X-Incomplete` header to determine if more results exist.",
+            "content": {
+              "application/x-ndjson": {}
+            }
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/retry": {
+      "post": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Retry failed requests",
+        "description": "Retry all failed requests in a batch.\n\nFailed requests are reset to pending and will be processed again. Use this after fixing transient issues or increasing rate limits.",
+        "operationId": "retry_failed_batch_requests",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Failed requests queued for retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No failed requests to retry in this batch."
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/batches/{batch_id}/retry-requests": {
+      "post": {
+        "tags": [
+          "batches"
+        ],
+        "summary": "Retry specific requests",
+        "description": "Retry specific failed requests by their IDs.\n\nUse this for fine-grained control over which requests to retry, rather than retrying all failures.",
+        "operationId": "retry_specific_requests",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned when the batch was created.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryRequestsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Specified requests queued for retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No valid request IDs provided."
+          },
+          "404": {
+            "description": "Batch not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/chat/completions": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Create chat completion",
+        "description": "Creates a model response for the given chat conversation.\n\nThe conversation is provided as an array of messages, where each message has a `role` (system, user, assistant, or tool) and `content`.\n\nSet `stream: true` to receive partial responses as server-sent events.",
+        "operationId": "chat_completions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Chat completion generated successfully. Response framing depends on the `stream` parameter and `Accept` header:\n\n- Default (`stream` unset or `false`): a single JSON `ChatCompletionResponse`.\n- `stream: true`: an SSE stream of token deltas.\n- `stream: \"patch\"`: an NDJSON stream of `JsonPatchOperation` records (one per line), or SSE if `Accept: text/event-stream` is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              },
+              "application/x-ndjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonPatchOperation"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonPatchOperation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request - check that your messages array is properly formatted and all required fields are present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits. Top up your account to continue making requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your API key does not have access to the requested model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified model does not exist. Use `GET /models` to list available models.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Back off and retry after a short delay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/embeddings": {
+      "post": {
+        "tags": [
+          "embeddings"
+        ],
+        "summary": "Create embeddings",
+        "description": "Creates embedding vectors representing the input text.\n\nInput can be a single string or an array of strings. Each input produces one embedding vector in the response.",
+        "operationId": "embeddings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Embeddings generated successfully. Each input string has a corresponding entry in the `data` array.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request - check that your input is a string or array of strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits. Top up your account to continue making requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your API key does not have access to the requested model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified model does not exist. Use `GET /models` to list available models.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Back off and retry after a short delay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/files": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "List files",
+        "description": "Returns a paginated list of your uploaded files.\n\nUse cursor-based pagination: pass `last_id` from the response as the `after` parameter to fetch the next page.",
+        "operationId": "list_files",
+        "parameters": [
+          {
+            "name": "pagination",
+            "in": "query",
+            "description": "Pagination parameters",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "description": "Cursor-based pagination parameters for OpenAI-compatible endpoints.\n\nUsed by batch and files APIs following OpenAI's pagination pattern:\n- `after`: Cursor ID to start after (exclusive)\n- `limit`: Maximum items to return (default: 20, max: 100)",
+              "properties": {
+                "after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "A cursor for use in pagination. `after` is an object ID that defines your place in the list."
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Maximum number of items to return (default: 20, max: 100)"
+                }
+              }
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order by created_at (asc or desc, default desc)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "description": "Only return files with the given purpose",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search query to filter files by filename (case-insensitive substring match)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of files. Check `has_more` to determine if additional pages exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Upload file",
+        "description": "Upload a JSONL file for batch processing.\n\nEach line must be a valid JSON object containing `custom_id`, `method`, `url`, and `body` fields. The `model` field in the body must reference a model your API key has access to.",
+        "operationId": "upload_file",
+        "requestBody": {
+          "description": "Multipart form with `file` (the JSONL file) and `purpose` (must be `batch`).",
+          "content": {
+            "multipart/form-data": {}
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded and validated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file format, malformed JSON, missing required fields, etc."
+          },
+          "403": {
+            "description": "Model referenced in the file is not configured or not accessible to your account."
+          },
+          "413": {
+            "description": "File exceeds the maximum allowed size."
+          },
+          "429": {
+            "description": "Too many concurrent uploads. Retry after a short delay."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/files/{file_id}": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Retrieve file",
+        "description": "Returns metadata about a specific file, including its size, creation time, and purpose.",
+        "operationId": "get_file",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The file ID returned when the file was uploaded.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Delete file",
+        "description": "Permanently delete a file.\n\nDeleting a file also deletes any batches that were created from it. This action cannot be undone.",
+        "operationId": "delete_file",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The file ID returned when the file was uploaded.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDeleteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/files/{file_id}/content": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Retrieve file content",
+        "description": "Download the content of a file as JSONL.\n\nFor input files, returns the original request templates. For output files, returns the completed responses. Supports pagination via `limit` and `offset` query parameters.",
+        "operationId": "get_file_content",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The file ID returned when the file was uploaded.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagination",
+            "in": "query",
+            "description": "Pagination parameters",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "description": "Standard pagination parameters for admin API list endpoints.\n\nAll admin endpoints use consistent offset-based pagination with:\n- `skip`: Number of items to skip (default: 0)\n- `limit`: Maximum items to return (default: 10, max: 100)\n\nThe `limit` is clamped to ensure it's always between 1 and 100,\npreventing both zero-result queries and excessive data fetching.",
+              "properties": {
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Maximum number of items to return (default: 10, max: 100)"
+                },
+                "skip": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Number of items to skip (default: 0)"
+                }
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search query to filter by custom_id (case-insensitive substring match)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File content as newline-delimited JSON. Check the `X-Incomplete` header to determine if more content exists.",
+            "content": {
+              "application/x-ndjson": {}
+            }
+          },
+          "404": {
+            "description": "File not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/files/{file_id}/cost-estimate": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Get file cost estimate",
+        "description": "Estimate the cost of processing a batch file before creating a batch.\n\nReturns a breakdown by model including estimated input/output tokens and cost. Useful for validating costs before committing to a batch run.",
+        "operationId": "get_file_cost_estimate",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The ID of the file to estimate cost for",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "completion_window",
+            "in": "query",
+            "description": "Completion window (priority) for batch processing (e.g., \"24h\", \"1h\", \"48h\")\nIf not provided, defaults to \"24h\"",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cost estimate with per-model breakdown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileCostEstimate"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found or you don't have access to it."
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists."
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "List models",
+        "description": "Lists the models available to your API key.\n\nThe response includes model IDs that can be used in chat completion and embedding requests.",
+        "operationId": "list_models",
+        "responses": {
+          "200": {
+            "description": "List of models your API key can access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/models/{model}": {
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Retrieve model",
+        "description": "Retrieves information about a specific model.",
+        "operationId": "get_model",
+        "parameters": [
+          {
+            "name": "model",
+            "in": "path",
+            "description": "The model ID (e.g., `gpt-4`, `text-embedding-ada-002`)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model details including ID, owner, and creation timestamp.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelObject"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified model does not exist or you don't have access to it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/responses": {
+      "post": {
+        "tags": [
+          "responses-api"
+        ],
+        "summary": "Create response",
+        "description": "Creates a model response for the given input.\n\nThis endpoint implements the Open Responses compatible API, providing enhanced capabilities including:\n\n- **Reasoning models** with controllable effort via `reasoning` parameter\n- **Stateful conversations** via `previous_response_id` for maintaining context across turns\n- **Flexible input** - accepts either a string or array of messages\n- **Text output configuration** via `text` parameter for structured outputs\n- **Context window management** via `truncation` parameter\n\nSet `stream: true` to receive partial responses as server-sent events.\n\n[Open Responses API Reference →](https://www.openresponses.org/reference)",
+        "operationId": "create_response",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Response generated successfully. When streaming, returns a series of SSE events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request - check that your input is properly formatted and all required fields are present.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key. Ensure your `Authorization` header is set to `Bearer YOUR_API_KEY`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits. Top up your account to continue making requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your API key does not have access to the requested model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified model does not exist. Use `GET /models` to list available models.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Back off and retry after a short delay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred. Retry the request or contact support if the issue persists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BatchAnalytics": {
+        "type": "object",
+        "description": "Aggregated analytics metrics for batch requests",
+        "required": [
+          "total_requests",
+          "total_prompt_tokens",
+          "total_completion_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "avg_duration_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Average request duration in milliseconds",
+            "example": 1250.5
+          },
+          "avg_ttfb_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Average time to first byte in milliseconds",
+            "example": 150.2
+          },
+          "total_completion_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total completion tokens across all requests",
+            "example": 25000
+          },
+          "total_cost": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Total cost in credits (if pricing is available)",
+            "example": "0.75"
+          },
+          "total_prompt_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total prompt tokens across all requests",
+            "example": 50000
+          },
+          "total_requests": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of requests with analytics data",
+            "example": 100
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total tokens (prompt + completion) across all requests",
+            "example": 75000
+          }
+        },
+        "example": {
+          "avg_duration_ms": 1250.5,
+          "avg_ttfb_ms": 150.2,
+          "total_completion_tokens": 25000,
+          "total_cost": "0.75",
+          "total_prompt_tokens": 50000,
+          "total_requests": 100,
+          "total_tokens": 75000
+        }
+      },
+      "BatchError": {
+        "type": "object",
+        "description": "Individual error in a batch",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An error code identifying the error type",
+            "example": "invalid_request"
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The line number of the input file where the error occurred, if applicable",
+            "example": 5
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable message providing more details about the error",
+            "example": "Invalid JSON on line 5"
+          },
+          "param": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the parameter that caused the error, if applicable"
+          }
+        },
+        "example": {
+          "code": "invalid_request",
+          "line": 5,
+          "message": "Invalid JSON on line 5"
+        }
+      },
+      "BatchErrors": {
+        "type": "object",
+        "description": "Batch-level errors",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchError"
+            },
+            "description": "Array of error details"
+          }
+        },
+        "example": {
+          "data": [
+            {
+              "code": "invalid_request",
+              "line": 5,
+              "message": "Invalid JSON on line 5"
+            }
+          ]
+        }
+      },
+      "BatchListResponse": {
+        "type": "object",
+        "description": "Response for batch list",
+        "required": [
+          "object",
+          "data",
+          "has_more"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchResponse"
+            }
+          },
+          "first_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "batch-abc123"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
+          "last_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "batch-abc123"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ListObjectType"
+          }
+        },
+        "example": {
+          "data": [
+            {
+              "completion_window": "24h",
+              "created_at": 1703187200,
+              "endpoint": "/v1/chat/completions",
+              "id": "batch-abc123",
+              "input_file_id": "file-abc123",
+              "object": "batch",
+              "request_counts": {
+                "completed": 98,
+                "failed": 2,
+                "total": 100
+              },
+              "status": "completed"
+            }
+          ],
+          "first_id": "batch-abc123",
+          "has_more": false,
+          "last_id": "batch-abc123",
+          "object": "list"
+        }
+      },
+      "BatchObjectType": {
+        "type": "string",
+        "description": "Object type - always \"batch\"",
+        "enum": [
+          "batch"
+        ]
+      },
+      "BatchResponse": {
+        "type": "object",
+        "description": "Batch object response (OpenAI-compatible)",
+        "required": [
+          "id",
+          "object",
+          "endpoint",
+          "input_file_id",
+          "completion_window",
+          "status",
+          "created_at",
+          "request_counts"
+        ],
+        "properties": {
+          "analytics": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BatchAnalytics",
+                "description": "Aggregated analytics metrics (only included when requested via `include=analytics`)"
+              }
+            ]
+          },
+          "cancelled_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "cancelling_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "completed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "example": 1703190800
+          },
+          "completion_window": {
+            "type": "string",
+            "description": "The time window within which the batch should be processed (e.g., \"24h\", \"1h\").",
+            "example": "24h"
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1703187200
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "/v1/chat/completions"
+          },
+          "error_file_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BatchErrors"
+              }
+            ]
+          },
+          "expired_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "expires_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "failed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "finalizing_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "id": {
+            "type": "string",
+            "example": "batch-abc123"
+          },
+          "in_progress_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "input_file_id": {
+            "type": "string",
+            "example": "file-abc123"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "object": {
+            "$ref": "#/components/schemas/BatchObjectType"
+          },
+          "output_file_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "file-xyz789"
+          },
+          "request_counts": {
+            "$ref": "#/components/schemas/RequestCounts"
+          },
+          "status": {
+            "type": "string",
+            "example": "completed"
+          }
+        },
+        "example": {
+          "completed_at": 1703190800,
+          "completion_window": "24h",
+          "created_at": 1703187200,
+          "endpoint": "/v1/chat/completions",
+          "id": "batch-abc123",
+          "input_file_id": "file-abc123",
+          "object": "batch",
+          "output_file_id": "file-xyz789",
+          "request_counts": {
+            "completed": 98,
+            "failed": 2,
+            "total": 100
+          },
+          "status": "completed"
+        }
+      },
+      "ChatChoice": {
+        "type": "object",
+        "description": "A chat completion choice.",
+        "required": [
+          "index",
+          "message"
+        ],
+        "properties": {
+          "finish_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reason the model stopped generating tokens.",
+            "example": "stop"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The index of the choice in the list of choices.",
+            "example": 0
+          },
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage",
+            "description": "The chat completion message generated by the model."
+          }
+        },
+        "example": {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "A doubleword is a data unit that is twice the size of a standard word in computer architecture.",
+            "role": "assistant"
+          }
+        }
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "description": "Request body for chat completions.",
+        "required": [
+          "model",
+          "messages"
+        ],
+        "properties": {
+          "frequency_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\ntheir existing frequency in the text so far.",
+            "example": 0
+          },
+          "max_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The maximum number of tokens to generate in the chat completion.",
+            "example": 256
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "description": "A list of messages comprising the conversation so far."
+          },
+          "model": {
+            "type": "string",
+            "description": "ID of the model to use.",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "n": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "How many chat completion choices to generate for each input message.",
+            "example": 1
+          },
+          "presence_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\nwhether they appear in the text so far.",
+            "example": 0
+          },
+          "stop": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Up to 4 sequences where the API will stop generating further tokens."
+          },
+          "response_format": {
+            "description": "Output format for structured responses. Set to `{\"type\": \"json_schema\", \"json_schema\": {...}}` to constrain the response to a JSON schema. Required when `stream` is `\"patch\"`."
+          },
+          "seed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Random seed for sampling. If provided and supported by the model, sampling is deterministic."
+          },
+          "stream": {
+            "oneOf": [
+              {
+                "type": "boolean",
+                "description": "Set to `true` to receive partial token deltas as Server-Sent Events."
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "patch"
+                ],
+                "description": "Set to `\"patch\"` to stream the structured response field-by-field as RFC 6902 JSON Patch `add` operations. Requires `response_format` with a JSON schema. Defaults to NDJSON framing; send `Accept: text/event-stream` for SSE."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Streaming mode. `false`/unset returns a single JSON response. `true` streams token deltas as SSE. `\"patch\"` streams one JSON Patch `add` per schema field — see the [JSON Patch streaming reference](https://docs.doubleword.ai/api/chat-completions#json-patch-streaming).",
+            "example": false
+          },
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "What sampling temperature to use, between 0 and 2.",
+            "example": 0.7
+          },
+          "tool_choice": {
+            "description": "Controls which (if any) tool is called by the model."
+          },
+          "tools": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Tool"
+            },
+            "description": "A list of tools the model may call."
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "An alternative to sampling with temperature, called nucleus sampling.",
+            "example": 1
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A unique identifier representing your end-user."
+          }
+        },
+        "example": {
+          "max_tokens": 256,
+          "messages": [
+            {
+              "content": "You are a helpful assistant.",
+              "role": "system"
+            },
+            {
+              "content": "What is a doubleword?",
+              "role": "user"
+            }
+          ],
+          "model": "Qwen/Qwen3-30B-A3B-FP8",
+          "temperature": 0.7
+        }
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "description": "Response from chat completions.",
+        "required": [
+          "id",
+          "object",
+          "created",
+          "model",
+          "choices"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatChoice"
+            },
+            "description": "A list of chat completion choices."
+          },
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The Unix timestamp of when the chat completion was created.",
+            "example": 1703187200
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion.",
+            "example": "chatcmpl-abc123"
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for the chat completion.",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"chat.completion\".",
+            "example": "chat.completion"
+          },
+          "system_fingerprint": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The system fingerprint of the model."
+          },
+          "usage": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Usage",
+                "description": "Usage statistics for the completion request."
+              }
+            ]
+          }
+        },
+        "example": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "A doubleword is a data unit that is twice the size of a standard word in computer architecture, typically 32 or 64 bits depending on the system.",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 1703187200,
+          "id": "chatcmpl-abc123",
+          "model": "Qwen/Qwen3-30B-A3B-FP8",
+          "object": "chat.completion",
+          "usage": {
+            "completion_tokens": 36,
+            "prompt_tokens": 24,
+            "total_tokens": 60
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "description": "A message in a chat conversation.",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The content of the message.",
+            "example": "What is a doubleword?"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the author (for function/tool messages)."
+          },
+          "role": {
+            "type": "string",
+            "description": "The role of the message author (system, user, assistant, tool, function).",
+            "example": "user"
+          },
+          "tool_call_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The ID of the tool call this message is responding to."
+          },
+          "tool_calls": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ToolCall"
+            },
+            "description": "Tool calls made by the assistant."
+          }
+        },
+        "example": {
+          "content": "What is a doubleword?",
+          "role": "user"
+        }
+      },
+      "CreateBatchRequest": {
+        "type": "object",
+        "description": "Request body for creating a batch",
+        "required": [
+          "input_file_id",
+          "endpoint",
+          "completion_window"
+        ],
+        "properties": {
+          "completion_window": {
+            "type": "string",
+            "description": "The time window within which the batch should be processed (e.g., \"24h\", \"1h\").\nAllowed values are configured per instance.",
+            "example": "24h"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The endpoint to be used for all requests in the batch.\nSupported values are configured via `batches.allowed_url_paths`.",
+            "example": "/v1/chat/completions"
+          },
+          "input_file_id": {
+            "type": "string",
+            "description": "The ID of an uploaded file that contains requests for the new batch",
+            "example": "file-abc123"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional metadata (up to 16 key-value pairs)",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        },
+        "example": {
+          "completion_window": "24h",
+          "endpoint": "/v1/chat/completions",
+          "input_file_id": "file-abc123"
+        }
+      },
+      "CursorPagination": {
+        "type": "object",
+        "description": "Cursor-based pagination parameters for OpenAI-compatible endpoints.\n\nUsed by batch and files APIs following OpenAI's pagination pattern:\n- `after`: Cursor ID to start after (exclusive)\n- `limit`: Maximum items to return (default: 20, max: 100)",
+        "properties": {
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A cursor for use in pagination. `after` is an object ID that defines your place in the list."
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Maximum number of items to return (default: 20, max: 100)"
+          }
+        }
+      },
+      "EmbeddingData": {
+        "type": "object",
+        "description": "A single embedding result.",
+        "required": [
+          "object",
+          "index",
+          "embedding"
+        ],
+        "properties": {
+          "embedding": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "The embedding vector."
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The index of this embedding in the list.",
+            "example": 0
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"embedding\".",
+            "example": "embedding"
+          }
+        },
+        "example": {
+          "embedding": [
+            0.0023,
+            -0.0134,
+            0.0256
+          ],
+          "index": 0,
+          "object": "embedding"
+        }
+      },
+      "EmbeddingInput": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "A single string to embed."
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An array of strings to embed."
+          }
+        ],
+        "description": "Input for embedding requests - can be a single string or array of strings.",
+        "example": "What is a doubleword?"
+      },
+      "EmbeddingRequest": {
+        "type": "object",
+        "description": "Request body for embeddings.",
+        "required": [
+          "model",
+          "input"
+        ],
+        "properties": {
+          "dimensions": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of dimensions the resulting output embeddings should have."
+          },
+          "encoding_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The format to return the embeddings in (\"float\" or \"base64\").",
+            "example": "float"
+          },
+          "input": {
+            "$ref": "#/components/schemas/EmbeddingInput",
+            "description": "Input text to embed. Can be a string or array of strings."
+          },
+          "model": {
+            "type": "string",
+            "description": "ID of the model to use.",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A unique identifier representing your end-user."
+          }
+        },
+        "example": {
+          "input": "What is a doubleword?",
+          "model": "Qwen/Qwen3-30B-A3B-FP8"
+        }
+      },
+      "EmbeddingResponse": {
+        "type": "object",
+        "description": "Response from embeddings.",
+        "required": [
+          "object",
+          "data",
+          "model",
+          "usage"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmbeddingData"
+            },
+            "description": "The list of embeddings generated."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for generating embeddings.",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"list\".",
+            "example": "list"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/EmbeddingUsage",
+            "description": "Usage statistics for the request."
+          }
+        },
+        "example": {
+          "data": [
+            {
+              "embedding": [
+                0.0023,
+                -0.0134,
+                0.0256
+              ],
+              "index": 0,
+              "object": "embedding"
+            }
+          ],
+          "model": "Qwen/Qwen3-30B-A3B-FP8",
+          "object": "list",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 6
+          }
+        }
+      },
+      "EmbeddingUsage": {
+        "type": "object",
+        "description": "Usage statistics for embedding requests.",
+        "required": [
+          "prompt_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "prompt_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of tokens in the input.",
+            "example": 6
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of tokens used.",
+            "example": 6
+          }
+        },
+        "example": {
+          "prompt_tokens": 6,
+          "total_tokens": 6
+        }
+      },
+      "FileCostEstimate": {
+        "type": "object",
+        "description": "Response for file cost estimation",
+        "required": [
+          "file_id",
+          "total_requests",
+          "total_estimated_input_tokens",
+          "total_estimated_output_tokens",
+          "total_estimated_cost",
+          "models"
+        ],
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "example": "file-abc123"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCostBreakdown"
+            },
+            "description": "Per-model breakdown"
+          },
+          "total_estimated_cost": {
+            "type": "string",
+            "description": "Total cost as string to preserve decimal precision",
+            "example": "0.75"
+          },
+          "total_estimated_input_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "example": 50000
+          },
+          "total_estimated_output_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "example": 25000
+          },
+          "total_requests": {
+            "type": "integer",
+            "format": "int64",
+            "example": 100
+          }
+        },
+        "example": {
+          "file_id": "file-abc123",
+          "models": [
+            {
+              "estimated_cost": "0.75",
+              "estimated_input_tokens": 50000,
+              "estimated_output_tokens": 25000,
+              "model": "Qwen/Qwen3-30B-A3B-FP8",
+              "request_count": 100
+            }
+          ],
+          "total_estimated_cost": "0.75",
+          "total_estimated_input_tokens": 50000,
+          "total_estimated_output_tokens": 25000,
+          "total_requests": 100
+        }
+      },
+      "FileDeleteResponse": {
+        "type": "object",
+        "description": "Response for file deletion",
+        "required": [
+          "id",
+          "object",
+          "deleted"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          },
+          "id": {
+            "type": "string",
+            "example": "file-abc123"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ObjectType"
+          }
+        },
+        "example": {
+          "deleted": true,
+          "id": "file-abc123",
+          "object": "file"
+        }
+      },
+      "FileListResponse": {
+        "type": "object",
+        "description": "Response for file list",
+        "required": [
+          "object",
+          "data",
+          "has_more"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          },
+          "first_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "file-abc123"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
+          "last_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "file-abc123"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ListObject"
+          }
+        },
+        "example": {
+          "data": [
+            {
+              "bytes": 12045,
+              "created_at": 1703187200,
+              "filename": "batch_requests.jsonl",
+              "id": "file-abc123",
+              "object": "file",
+              "purpose": "batch"
+            }
+          ],
+          "first_id": "file-abc123",
+          "has_more": false,
+          "last_id": "file-abc123",
+          "object": "list"
+        }
+      },
+      "FileResponse": {
+        "type": "object",
+        "description": "File object response (OpenAI-compatible)",
+        "required": [
+          "id",
+          "object",
+          "bytes",
+          "created_at",
+          "filename",
+          "purpose"
+        ],
+        "properties": {
+          "bytes": {
+            "type": "integer",
+            "format": "int64",
+            "example": 12045
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1703187200
+          },
+          "expires_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "filename": {
+            "type": "string",
+            "example": "batch_requests.jsonl"
+          },
+          "id": {
+            "type": "string",
+            "example": "file-abc123"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ObjectType"
+          },
+          "purpose": {
+            "$ref": "#/components/schemas/Purpose"
+          }
+        },
+        "example": {
+          "bytes": 12045,
+          "created_at": 1703187200,
+          "filename": "batch_requests.jsonl",
+          "id": "file-abc123",
+          "object": "file",
+          "purpose": "batch"
+        }
+      },
+      "FunctionCall": {
+        "type": "object",
+        "description": "A function call within a tool call.",
+        "required": [
+          "name",
+          "arguments"
+        ],
+        "properties": {
+          "arguments": {
+            "type": "string",
+            "description": "The arguments to pass to the function, as a JSON string.",
+            "example": "{\"location\": \"San Francisco\"}"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the function to call.",
+            "example": "get_weather"
+          }
+        },
+        "example": {
+          "arguments": "{\"location\": \"San Francisco\"}",
+          "name": "get_weather"
+        }
+      },
+      "FunctionDefinition": {
+        "type": "object",
+        "description": "Definition of a function that can be called by the model.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A description of what the function does.",
+            "example": "Get the current weather in a location"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the function.",
+            "example": "get_weather"
+          },
+          "parameters": {
+            "description": "The parameters the function accepts, as a JSON Schema object."
+          }
+        },
+        "example": {
+          "description": "Get the current weather in a location",
+          "name": "get_weather",
+          "parameters": {
+            "properties": {
+              "location": {
+                "description": "City name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "location"
+            ],
+            "type": "object"
+          }
+        }
+      },
+      "JsonPatchOperation": {
+        "type": "object",
+        "description": "An RFC 6902 JSON Patch operation, emitted one per line (NDJSON) or per SSE event when `stream: \"patch\"` is set on `/chat/completions`. The first record seeds the document root (`path: \"\"` with `value: {}` for object-rooted schemas, `[]` for array-rooted). Subsequent records fill in leaf fields and seed nested containers in schema order. Applying the ops in order reconstructs the same document a non-streaming request would return.",
+        "required": [
+          "op",
+          "path",
+          "value"
+        ],
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "add"
+            ],
+            "description": "The RFC 6902 operation. Always `\"add\"` in patch streaming mode.",
+            "example": "add"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSON Pointer to the location being filled in. Empty string for the root seed; otherwise a leading `/` followed by the field key (e.g., `/intent`, `/steps/0`, `/address/city`).",
+            "example": "/intent"
+          },
+          "value": {
+            "description": "The inserted value. For leaf fields, a JSON primitive (string, number, boolean, null). For nested objects and arrays, an empty container (`{}` or `[]`) that subsequent ops will fill."
+          }
+        },
+        "example": {
+          "op": "add",
+          "path": "/intent",
+          "value": "billing"
+        }
+      },
+      "ListBatchesQuery": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CursorPagination",
+            "description": "Pagination parameters"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "include": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Comma-separated list of related resources to include. Supported: \"analytics\""
+              },
+              "search": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Search query to filter batches by endpoint or input filename (case-insensitive substring match)"
+              }
+            }
+          }
+        ],
+        "description": "Query parameters for listing batches"
+      },
+      "ListFilesQuery": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CursorPagination",
+            "description": "Pagination parameters"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "order": {
+                "type": "string",
+                "description": "Sort order by created_at (asc or desc, default desc)"
+              },
+              "purpose": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only return files with the given purpose"
+              },
+              "search": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Search query to filter files by filename (case-insensitive substring match)"
+              }
+            }
+          }
+        ],
+        "description": "Query parameters for listing files (OpenAI-compatible cursor-based pagination)"
+      },
+      "ListObject": {
+        "type": "string",
+        "description": "Object type for lists - always \"list\"",
+        "enum": [
+          "list"
+        ]
+      },
+      "ListObjectType": {
+        "type": "string",
+        "description": "Object type for lists - always \"list\"",
+        "enum": [
+          "list"
+        ]
+      },
+      "ModelCostBreakdown": {
+        "type": "object",
+        "description": "Per-model cost breakdown",
+        "required": [
+          "model",
+          "request_count",
+          "estimated_input_tokens",
+          "estimated_output_tokens",
+          "estimated_cost"
+        ],
+        "properties": {
+          "estimated_cost": {
+            "type": "string",
+            "description": "Cost as string to preserve decimal precision",
+            "example": "0.75"
+          },
+          "estimated_input_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "example": 50000
+          },
+          "estimated_output_tokens": {
+            "type": "integer",
+            "format": "int64",
+            "example": 25000
+          },
+          "model": {
+            "type": "string",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "request_count": {
+            "type": "integer",
+            "format": "int64",
+            "example": 100
+          }
+        },
+        "example": {
+          "estimated_cost": "0.75",
+          "estimated_input_tokens": 50000,
+          "estimated_output_tokens": 25000,
+          "model": "Qwen/Qwen3-30B-A3B-FP8",
+          "request_count": 100
+        }
+      },
+      "ModelObject": {
+        "type": "object",
+        "description": "A model object.",
+        "required": [
+          "id",
+          "object",
+          "created",
+          "owned_by"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The Unix timestamp of when the model was created.",
+            "example": 1703187200
+          },
+          "id": {
+            "type": "string",
+            "description": "The model identifier.",
+            "example": "Qwen/Qwen3-30B-A3B-FP8"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"model\".",
+            "example": "model"
+          },
+          "owned_by": {
+            "type": "string",
+            "description": "The organization that owns the model.",
+            "example": "qwen"
+          }
+        },
+        "example": {
+          "created": 1703187200,
+          "id": "Qwen/Qwen3-30B-A3B-FP8",
+          "object": "model",
+          "owned_by": "qwen"
+        }
+      },
+      "ModelsListResponse": {
+        "type": "object",
+        "description": "Response for listing available models.",
+        "required": [
+          "object",
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelObject"
+            },
+            "description": "The list of available models."
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"list\".",
+            "example": "list"
+          }
+        },
+        "example": {
+          "data": [
+            {
+              "created": 1703187200,
+              "id": "Qwen/Qwen3-30B-A3B-FP8",
+              "object": "model",
+              "owned_by": "qwen"
+            }
+          ],
+          "object": "list"
+        }
+      },
+      "ObjectType": {
+        "type": "string",
+        "description": "Object type - always \"file\"",
+        "enum": [
+          "file"
+        ]
+      },
+      "OpenAIError": {
+        "type": "object",
+        "description": "OpenAI-compatible error details.",
+        "required": [
+          "message",
+          "type"
+        ],
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The error code.",
+            "example": "invalid_api_key"
+          },
+          "message": {
+            "type": "string",
+            "description": "The error message.",
+            "example": "Invalid API key provided"
+          },
+          "param": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The parameter that caused the error, if applicable."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of error.",
+            "example": "authentication_error"
+          }
+        },
+        "example": {
+          "code": "invalid_api_key",
+          "message": "Invalid API key provided",
+          "type": "authentication_error"
+        }
+      },
+      "OpenAIErrorResponse": {
+        "type": "object",
+        "description": "OpenAI-compatible error response.",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/OpenAIError",
+            "description": "The error details."
+          }
+        },
+        "example": {
+          "error": {
+            "code": "invalid_api_key",
+            "message": "Invalid API key provided",
+            "type": "authentication_error"
+          }
+        }
+      },
+      "Purpose": {
+        "type": "string",
+        "description": "Purpose for file",
+        "enum": [
+          "batch",
+          "batch_output",
+          "batch_error"
+        ]
+      },
+      "RequestCounts": {
+        "type": "object",
+        "description": "Request counts for a batch",
+        "required": [
+          "total",
+          "completed",
+          "failed"
+        ],
+        "properties": {
+          "completed": {
+            "type": "integer",
+            "format": "int64",
+            "example": 98
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "example": 100
+          }
+        },
+        "example": {
+          "completed": 98,
+          "failed": 2,
+          "total": 100
+        }
+      },
+      "ResponseInput": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "A single string input."
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "description": "An array of messages (chat-style conversation)."
+          }
+        ],
+        "description": "Input for response requests - can be a single string or array of messages.",
+        "example": "What is a doubleword?"
+      },
+      "ResponseItem": {
+        "type": "object",
+        "description": "A single item in the response output array.",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The content of the message (for message-type items).",
+            "example": "A doubleword is a data unit that is twice the size of a standard word."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The role of the message (for message-type items).",
+            "example": "assistant"
+          },
+          "tool_calls": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ToolCall"
+            },
+            "description": "Tool calls made by the model (for message-type items with tool calls)."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of item (e.g., \"message\", \"function_call\").",
+            "example": "message"
+          }
+        },
+        "example": {
+          "content": "A doubleword is a data unit that is twice the size of a standard word in computer architecture.",
+          "role": "assistant",
+          "type": "message"
+        }
+      },
+      "ResponseObject": {
+        "type": "object",
+        "description": "Response from creating a response.",
+        "required": [
+          "id",
+          "object",
+          "created_at",
+          "completed_at",
+          "model",
+          "status",
+          "output",
+          "usage",
+          "temperature",
+          "top_p"
+        ],
+        "properties": {
+          "completed_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The Unix timestamp of when the response was completed.",
+            "example": 1703187205
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The Unix timestamp of when the response was created.",
+            "example": 1703187200
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the response.",
+            "example": "resp-abc123"
+          },
+          "metadata": {
+            "description": "Developer-defined tags and values."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for generating the response.",
+            "example": "gpt-4o"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, always \"response\".",
+            "example": "response"
+          },
+          "output": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseItem"
+            },
+            "description": "The output items generated by the model."
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the response. Can be \"completed\", \"incomplete\", \"cancelled\", or \"failed\".",
+            "example": "completed"
+          },
+          "temperature": {
+            "type": "number",
+            "format": "float",
+            "description": "The temperature used for sampling (echoed from request).",
+            "example": 0.7
+          },
+          "top_p": {
+            "type": "number",
+            "format": "float",
+            "description": "The nucleus sampling parameter used (echoed from request).",
+            "example": 1
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage",
+            "description": "Usage statistics for the response request."
+          }
+        },
+        "example": {
+          "completed_at": 1703187205,
+          "created_at": 1703187200,
+          "id": "resp-abc123",
+          "model": "gpt-4o",
+          "object": "response",
+          "output": [
+            {
+              "content": "A doubleword is a data unit that is twice the size of a standard word in computer architecture.",
+              "role": "assistant",
+              "type": "message"
+            }
+          ],
+          "status": "completed",
+          "temperature": 0.7,
+          "top_p": 1,
+          "usage": {
+            "completion_tokens": 25,
+            "prompt_tokens": 10,
+            "total_tokens": 35
+          }
+        }
+      },
+      "ResponseRequest": {
+        "type": "object",
+        "description": "Request body for creating a response.",
+        "required": [
+          "model",
+          "input"
+        ],
+        "properties": {
+          "frequency_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\ntheir existing frequency in the text so far.",
+            "example": 0
+          },
+          "include": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Include encrypted reasoning content for rehydration on subsequent requests."
+          },
+          "input": {
+            "$ref": "#/components/schemas/ResponseInput",
+            "description": "The input to generate a response for. Can be a string or array of messages."
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "System instructions for the model.",
+            "example": "You are a helpful assistant."
+          },
+          "max_output_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The maximum number of tokens to generate in the response.",
+            "example": 256
+          },
+          "metadata": {
+            "description": "Developer-defined tags and values for organizing responses."
+          },
+          "modalities": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Output types that you would like the model to generate (e.g., [\"text\"], [\"text\", \"audio\"])."
+          },
+          "model": {
+            "type": "string",
+            "description": "ID of the model to use.",
+            "example": "gpt-4o"
+          },
+          "parallel_tool_calls": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to enable parallel function calling during tool use.",
+            "example": true
+          },
+          "presence_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on\nwhether they appear in the text so far.",
+            "example": 0
+          },
+          "previous_response_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The ID of a previous response to continue from (for stateful conversations)."
+          },
+          "reasoning": {
+            "description": "Reasoning configuration for controlling reasoning behavior."
+          },
+          "reasoning_effort": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Constrains effort on reasoning. Supported values: \"none\", \"minimal\", \"low\", \"medium\", \"high\", \"xhigh\".",
+            "example": "medium"
+          },
+          "stop": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Up to 4 sequences where the API will stop generating further tokens."
+          },
+          "store": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to store this response for future reference.",
+            "example": false
+          },
+          "stream": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "If set, partial message deltas will be sent as server-sent events.",
+            "example": false
+          },
+          "stream_options": {
+            "description": "Options for streaming response."
+          },
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "What sampling temperature to use, between 0 and 2.",
+            "example": 0.7
+          },
+          "text": {
+            "description": "Text output configuration."
+          },
+          "tool_choice": {
+            "description": "Controls which (if any) tool is called by the model."
+          },
+          "tools": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Tool"
+            },
+            "description": "A list of tools the model may call."
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "An alternative to sampling with temperature, called nucleus sampling.",
+            "example": 1
+          },
+          "truncation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How to handle context window overflow (\"auto\" or \"disabled\")."
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A unique identifier representing your end-user."
+          }
+        },
+        "example": {
+          "input": "What is a doubleword?",
+          "max_output_tokens": 256,
+          "model": "gpt-4o",
+          "temperature": 0.7
+        }
+      },
+      "RetryRequestsRequest": {
+        "type": "object",
+        "description": "Request body for retrying specific requests",
+        "required": [
+          "request_ids"
+        ],
+        "properties": {
+          "request_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of request IDs to retry"
+          }
+        },
+        "example": {
+          "request_ids": [
+            "req-abc123",
+            "req-def456"
+          ]
+        }
+      },
+      "Tool": {
+        "type": "object",
+        "description": "A tool that the model may call.",
+        "required": [
+          "type",
+          "function"
+        ],
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionDefinition",
+            "description": "The function definition."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of tool (currently only \"function\").",
+            "example": "function"
+          }
+        },
+        "example": {
+          "function": {
+            "description": "Get the current weather in a location",
+            "name": "get_weather",
+            "parameters": {
+              "properties": {
+                "location": {
+                  "description": "City name",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "location"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      },
+      "ToolCall": {
+        "type": "object",
+        "description": "A tool call made by the model.",
+        "required": [
+          "id",
+          "type",
+          "function"
+        ],
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionCall",
+            "description": "The function that was called."
+          },
+          "id": {
+            "type": "string",
+            "description": "The ID of the tool call.",
+            "example": "call_abc123"
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of tool (currently only \"function\").",
+            "example": "function"
+          }
+        },
+        "example": {
+          "function": {
+            "arguments": "{\"location\": \"San Francisco\"}",
+            "name": "get_weather"
+          },
+          "id": "call_abc123",
+          "type": "function"
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "description": "Token usage statistics.",
+        "required": [
+          "prompt_tokens",
+          "completion_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "completion_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of tokens in the generated completion.",
+            "example": 36
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of tokens in the prompt.",
+            "example": 24
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of tokens used in the request.",
+            "example": 60
+          }
+        },
+        "example": {
+          "completion_tokens": 36,
+          "prompt_tokens": 24,
+          "total_tokens": 60
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "API key authentication. Include your key in the `Authorization` header:\n\n```\nAuthorization: Bearer YOUR_API_KEY\n```\n\nAPI keys can be created and managed in the dashboard."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "files",
+      "description": "Upload and manage JSONL files for batch processing.\n\nEach line in the file should be a JSON object with:\n- `custom_id` - your identifier for tracking the request\n- `method` - HTTP method (POST)\n- `url` - endpoint path (e.g., `/v1/chat/completions`)\n- `body` - the request payload\n\n[Learn more about the JSONL file format →](https://docs.doubleword.ai/batches/jsonl-files)"
+    },
+    {
+      "name": "batches",
+      "description": "Process large volumes of requests asynchronously.\n\nBatch processing is ideal when you:\n- Have many requests that don't need immediate responses\n- Want to process data in bulk (e.g., embeddings for a document corpus)\n- Are running offline evaluations or data pipelines\n\nChoose your completion window: 1 hour or 24 hours. You can track progress, cancel in-flight batches, and retry failed requests.\n\n[Getting started with the Batch API →](https://docs.doubleword.ai/batches/getting-started-with-batched-api)"
+    },
+    {
+      "name": "chat",
+      "description": "Create model responses for chat conversations.\n\nSupports:\n- **Multi-turn dialogue** with conversation history\n- **System prompts** to control model behavior\n- **Tool calling** for function execution and structured outputs\n- **Streaming** for real-time token delivery\n- **Sampling parameters** like temperature, top_p, and frequency penalties"
+    },
+    {
+      "name": "embeddings",
+      "description": "Generate vector representations of text.\n\nUse embeddings for:\n- **Semantic search** - find content by meaning, not just keywords\n- **Clustering** - group similar documents together\n- **Classification** - categorize text based on similarity to examples\n- **Recommendations** - suggest related content"
+    },
+    {
+      "name": "models",
+      "description": "List and retrieve information about available models.\n\nUse these endpoints to discover which models you have access to and their capabilities."
+    },
+    {
+      "name": "responses-api",
+      "description": "Create model responses with enhanced capabilities.\n\nOpen Responses compatible endpoint providing advanced features:\n\n- **Reasoning models** - Control computational effort with `reasoning` parameter\n- **Stateful conversations** - Maintain context across turns with `previous_response_id`\n- **Flexible input** - Use simple strings or full message arrays\n- **Text output configuration** - Structured outputs via `text` parameter\n- **Context management** - Handle overflow with `truncation` parameter\n\n[Open Responses API Reference →](https://www.openresponses.org/reference)"
+    }
+  ]
+}

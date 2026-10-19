@@ -1,0 +1,497 @@
+openapi: 3.2.0
+info:
+  title: dottxt Files API
+  description: The dottxt API
+  version: 1.0.0
+servers:
+- url: https://api.dottxt.ai/v1
+  description: dottxt API
+tags:
+- name: Files
+  description: 'Upload and manage JSONL files for batch processing.
+
+
+    Each line in the file should be a JSON object with:
+
+    - `custom_id` - your identifier for tracking the request
+
+    - `method` - HTTP method (POST)
+
+    - `url` - endpoint path (e.g., `/v1/chat/completions`)
+
+    - `body` - the request payload
+
+
+    Learn more about the JSONL file format →'
+paths:
+  /files:
+    get:
+      tags:
+      - Files
+      summary: List files
+      description: 'Returns a paginated list of your uploaded files.
+
+
+        Use cursor-based pagination: pass `last_id` from the response as the `after` parameter to fetch the next page.'
+      operationId: list_files
+      parameters:
+      - name: pagination
+        in: query
+        description: Pagination parameters
+        required: true
+        schema:
+          type: object
+          description: 'Cursor-based pagination parameters for OpenAI-compatible endpoints.
+
+
+            Used by batch and files APIs following OpenAI''s pagination pattern:
+
+            - `after`: Cursor ID to start after (exclusive)
+
+            - `limit`: Maximum items to return (default: 20, max: 100)'
+          properties:
+            after:
+              type:
+              - string
+              - 'null'
+              description: A cursor for use in pagination. `after` is an object ID that defines your place in the list.
+            limit:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Maximum number of items to return (default: 20, max: 100)'
+      - name: order
+        in: query
+        description: Sort order by created_at (asc or desc, default desc)
+        required: false
+        schema:
+          type: string
+      - name: purpose
+        in: query
+        description: Only return files with the given purpose
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      - name: search
+        in: query
+        description: Search query to filter files by filename (case-insensitive substring match)
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '200':
+          description: List of files. Check `has_more` to determine if additional pages exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+    post:
+      tags:
+      - Files
+      summary: Upload file
+      description: 'Upload a JSONL file for batch processing.
+
+
+        Each line must be a valid JSON object containing `custom_id`, `method`, `url`, and `body` fields. The `model` field in the body must reference a model your API key has access to.'
+      operationId: upload_file
+      requestBody:
+        description: Multipart form with `file` (the JSONL file) and `purpose` (must be `batch`).
+        content:
+          multipart/form-data: {}
+      responses:
+        '201':
+          description: File uploaded and validated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+        '400':
+          description: Invalid file format, malformed JSON, missing required fields, etc.
+        '403':
+          description: Model referenced in the file is not configured or not accessible to your account.
+        '413':
+          description: File exceeds the maximum allowed size.
+        '429':
+          description: Too many concurrent uploads. Retry after a short delay.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /files/{file_id}:
+    get:
+      tags:
+      - Files
+      summary: Retrieve file
+      description: Returns metadata about a specific file, including its size, creation time, and purpose.
+      operationId: get_file
+      parameters:
+      - name: file_id
+        in: path
+        description: The file ID returned when the file was uploaded.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: File metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+        '404':
+          description: File not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+    delete:
+      tags:
+      - Files
+      summary: Delete file
+      description: 'Permanently delete a file.
+
+
+        Deleting a file also deletes any batches that were created from it. This action cannot be undone.'
+      operationId: delete_file
+      parameters:
+      - name: file_id
+        in: path
+        description: The file ID returned when the file was uploaded.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: File deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileDeleteResponse'
+        '404':
+          description: File not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /files/{file_id}/content:
+    get:
+      tags:
+      - Files
+      summary: Retrieve file content
+      description: 'Download the content of a file as JSONL.
+
+
+        For input files, returns the original request templates. For output files, returns the completed responses. Supports pagination via `limit` and `offset` query parameters.'
+      operationId: get_file_content
+      parameters:
+      - name: file_id
+        in: path
+        description: The file ID returned when the file was uploaded.
+        required: true
+        schema:
+          type: string
+      - name: pagination
+        in: query
+        description: Pagination parameters
+        required: true
+        schema:
+          type: object
+          description: 'Standard pagination parameters for admin API list endpoints.
+
+
+            All admin endpoints use consistent offset-based pagination with:
+
+            - `skip`: Number of items to skip (default: 0)
+
+            - `limit`: Maximum items to return (default: 10, max: 100)
+
+
+            The `limit` is clamped to ensure it''s always between 1 and 100,
+
+            preventing both zero-result queries and excessive data fetching.'
+          properties:
+            limit:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Maximum number of items to return (default: 10, max: 100)'
+            skip:
+              type:
+              - integer
+              - 'null'
+              format: int64
+              description: 'Number of items to skip (default: 0)'
+      - name: search
+        in: query
+        description: Search query to filter by custom_id (case-insensitive substring match)
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '200':
+          description: File content as newline-delimited JSON. Check the `X-Incomplete` header to determine if more content exists.
+          content:
+            application/x-ndjson: {}
+        '404':
+          description: File not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+  /files/{file_id}/cost-estimate:
+    get:
+      tags:
+      - Files
+      summary: Get file cost estimate
+      description: 'Estimate the cost of processing a batch file before creating a batch.
+
+
+        Returns a breakdown by model including estimated input/output tokens and cost. Useful for validating costs before committing to a batch run.'
+      operationId: get_file_cost_estimate
+      parameters:
+      - name: file_id
+        in: path
+        description: The ID of the file to estimate cost for
+        required: true
+        schema:
+          type: string
+      - name: completion_window
+        in: query
+        description: 'Completion window (priority) for batch processing (e.g., "24h", "1h", "48h")
+
+          If not provided, defaults to "24h"'
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '200':
+          description: Cost estimate with per-model breakdown.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileCostEstimate'
+        '404':
+          description: File not found or you don't have access to it.
+        '500':
+          description: An unexpected error occurred. Retry the request or contact support if the issue persists.
+components:
+  schemas:
+    FileDeleteResponse:
+      type: object
+      description: Response for file deletion
+      required:
+      - id
+      - object
+      - deleted
+      properties:
+        deleted:
+          type: boolean
+          example: true
+        id:
+          type: string
+          example: file-abc123
+        object:
+          $ref: '#/components/schemas/ObjectType'
+      example:
+        deleted: true
+        id: file-abc123
+        object: file
+    FileResponse:
+      type: object
+      description: File object response (OpenAI-compatible)
+      required:
+      - id
+      - object
+      - bytes
+      - created_at
+      - filename
+      - purpose
+      properties:
+        bytes:
+          type: integer
+          format: int64
+          example: 12045
+        created_at:
+          type: integer
+          format: int64
+          example: 1703187200
+        expires_at:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        filename:
+          type: string
+          example: batch_requests.jsonl
+        id:
+          type: string
+          example: file-abc123
+        object:
+          $ref: '#/components/schemas/ObjectType'
+        purpose:
+          $ref: '#/components/schemas/Purpose'
+      example:
+        bytes: 12045
+        created_at: 1703187200
+        filename: batch_requests.jsonl
+        id: file-abc123
+        object: file
+        purpose: batch
+    FileListResponse:
+      type: object
+      description: Response for file list
+      required:
+      - object
+      - data
+      - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileResponse'
+        first_id:
+          type:
+          - string
+          - 'null'
+          example: file-abc123
+        has_more:
+          type: boolean
+          example: false
+        last_id:
+          type:
+          - string
+          - 'null'
+          example: file-abc123
+        object:
+          $ref: '#/components/schemas/ListObject'
+      example:
+        data:
+        - bytes: 12045
+          created_at: 1703187200
+          filename: batch_requests.jsonl
+          id: file-abc123
+          object: file
+          purpose: batch
+        first_id: file-abc123
+        has_more: false
+        last_id: file-abc123
+        object: list
+    ObjectType:
+      type: string
+      description: Object type - always "file"
+      enum:
+      - file
+    Purpose:
+      type: string
+      description: Purpose for file
+      enum:
+      - batch
+      - batch_output
+      - batch_error
+    FileCostEstimate:
+      type: object
+      description: Response for file cost estimation
+      required:
+      - file_id
+      - total_requests
+      - total_estimated_input_tokens
+      - total_estimated_output_tokens
+      - total_estimated_cost
+      - models
+      properties:
+        file_id:
+          type: string
+          example: file-abc123
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelCostBreakdown'
+          description: Per-model breakdown
+        total_estimated_cost:
+          type: string
+          description: Total cost as string to preserve decimal precision
+          example: '0.75'
+        total_estimated_input_tokens:
+          type: integer
+          format: int64
+          example: 50000
+        total_estimated_output_tokens:
+          type: integer
+          format: int64
+          example: 25000
+        total_requests:
+          type: integer
+          format: int64
+          example: 100
+      example:
+        file_id: file-abc123
+        models:
+        - estimated_cost: '0.75'
+          estimated_input_tokens: 50000
+          estimated_output_tokens: 25000
+          model: Qwen/Qwen3-30B-A3B-FP8
+          request_count: 100
+        total_estimated_cost: '0.75'
+        total_estimated_input_tokens: 50000
+        total_estimated_output_tokens: 25000
+        total_requests: 100
+    ModelCostBreakdown:
+      type: object
+      description: Per-model cost breakdown
+      required:
+      - model
+      - request_count
+      - estimated_input_tokens
+      - estimated_output_tokens
+      - estimated_cost
+      properties:
+        estimated_cost:
+          type: string
+          description: Cost as string to preserve decimal precision
+          example: '0.75'
+        estimated_input_tokens:
+          type: integer
+          format: int64
+          example: 50000
+        estimated_output_tokens:
+          type: integer
+          format: int64
+          example: 25000
+        model:
+          type: string
+          example: Qwen/Qwen3-30B-A3B-FP8
+        request_count:
+          type: integer
+          format: int64
+          example: 100
+      example:
+        estimated_cost: '0.75'
+        estimated_input_tokens: 50000
+        estimated_output_tokens: 25000
+        model: Qwen/Qwen3-30B-A3B-FP8
+        request_count: 100
+    ListObject:
+      type: string
+      description: Object type for lists - always "list"
+      enum:
+      - list
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API key authentication. Include your key in the `Authorization` header:
+
+
+        ```
+
+        Authorization: Bearer YOUR_API_KEY
+
+        ```
+
+
+        API keys can be created and managed in the dashboard.'
